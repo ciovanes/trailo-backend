@@ -19,8 +19,25 @@ services:
     networks:
       - trailo-network
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: trailo-pgadmin
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - trailo-network
+    depends_on:
+      - db
+
 volumes:
   postgres-data:
+  pgadmin-data:
 
 networks:
   trailo-network:
