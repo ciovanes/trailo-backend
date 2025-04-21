@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class TrailoBackendApplication
 
 fun main(args: Array<String>) {
-	runApplication<TrailoBackendApplication>(*args)
+    runApplication<TrailoBackendApplication>(*args)
 }
