@@ -12,12 +12,6 @@ import java.util.*
 @RequestMapping("/api/v1/users")
 class UserController(private val userService: UserService) {
 
-    @PostMapping
-    fun createUser(@RequestBody request: CreateUserRequest): ResponseEntity<UserResponse> {
-        val user = userService.createUser(request.email, request.username)
-        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.fromUser(user))
-    }
-
     @GetMapping
     fun getAllUsers(): ResponseEntity<List<UserResponse>> {
         val users = userService.getAllUsers()

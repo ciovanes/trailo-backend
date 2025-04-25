@@ -18,6 +18,21 @@ data class UserEntity (
     @Column(nullable = false, unique = true)
     val username: String,
 
+    @Column(nullable = true)
+    val name: String? = null,
+
+    @Column(nullable = true)
+    val surname: String? = null,
+
+    @Column(name = "profile_picture", nullable = true)
+    val profileImageUrl: String? = null,
+
+    @Column(nullable = true)
+    val country: String? = null,
+
+    @Column(name = "cognito_id", nullable = false, unique = true)
+    val cognitoId: String,
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now()

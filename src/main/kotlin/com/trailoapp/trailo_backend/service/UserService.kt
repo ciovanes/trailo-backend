@@ -11,7 +11,7 @@ import java.util.*
 class UserService(private val userRepository: UserRepository) {
 
     @Transactional
-    fun createUser(email: String, username: String): UserEntity {
+    fun createUser(email: String, username: String, name: String?, surname: String?, profileImageUrl: String?, country: String?, cognitoId: String): UserEntity {
         if (userRepository.existsByEmail(email)) {
             throw IllegalArgumentException("Email already exists: $email")
         }
@@ -23,6 +23,11 @@ class UserService(private val userRepository: UserRepository) {
         val userEntity = UserEntity(
             email = email,
             username = username,
+            name = name,
+            surname = surname,
+            profileImageUrl = profileImageUrl,
+            country = country,
+            cognitoId = cognitoId
         )
 
         return userRepository.save(userEntity)
