@@ -3,6 +3,8 @@ package com.trailoapp.trailo_backend.service
 import com.trailoapp.trailo_backend.domain.core.UserEntity
 import com.trailoapp.trailo_backend.repository.UserRepository
 import jakarta.transaction.Transactional
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.util.*
@@ -47,5 +49,9 @@ class UserService(private val userRepository: UserRepository) {
 
     fun getAllUsers(): List<UserEntity> {
         return userRepository.findAll()
+    }
+
+    fun getAllUsers(pageable: Pageable): Page<UserEntity> {
+        return userRepository.findAll(pageable)
     }
 }

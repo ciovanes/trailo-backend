@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -64,6 +65,22 @@ class GlobalExceptionHandler {
                 error = "Invalid request body",
                 message = message
             ))
+    }
+
+    /*
+    Handle invalid page or size
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun handleMethodArgumentTypeMismatchException(ex: MethodArgumentTypeMismatchException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(
+            HttpStatus.BAD_REQUEST
+        ).body(
+            ErrorResponse(
+                status = HttpStatus.BAD_REQUEST.value(),
+                error = "Invalid page or size",
+                message = "Page or size must be a positive integer"
+            )
+        )
     }
 
 }
