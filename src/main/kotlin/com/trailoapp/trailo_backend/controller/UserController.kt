@@ -1,8 +1,8 @@
 package com.trailoapp.trailo_backend.controller
 
-import com.trailoapp.trailo_backend.dto.request.CreateUserRequest
-import com.trailoapp.trailo_backend.dto.response.PageResponse
-import com.trailoapp.trailo_backend.dto.response.UserResponse
+import com.trailoapp.trailo_backend.dto.user.request.CreateUserRequest
+import com.trailoapp.trailo_backend.dto.common.response.PageResponse
+import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.service.UserService
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus

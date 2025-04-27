@@ -1,6 +1,7 @@
-package com.trailoapp.trailo_backend.dto.response
+package com.trailoapp.trailo_backend.dto.auth.response
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 
 data class AuthResponse(
     @JsonProperty("access_token")

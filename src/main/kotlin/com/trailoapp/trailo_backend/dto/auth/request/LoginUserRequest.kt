@@ -1,4 +1,4 @@
-package com.trailoapp.trailo_backend.dto.request
+package com.trailoapp.trailo_backend.dto.auth.request
 
 import jakarta.validation.constraints.NotBlank
 

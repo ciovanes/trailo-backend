@@ -1,4 +1,4 @@
-package com.trailoapp.trailo_backend.dto.response
+package com.trailoapp.trailo_backend.dto.common.response
 
 import java.time.LocalDateTime
 

@@ -1,9 +1,9 @@
 package com.trailoapp.trailo_backend.controller
 
-import com.trailoapp.trailo_backend.dto.request.LoginUserRequest
-import com.trailoapp.trailo_backend.dto.request.RegisterUserRequest
-import com.trailoapp.trailo_backend.dto.response.AuthResponse
-import com.trailoapp.trailo_backend.dto.response.UserResponse
+import com.trailoapp.trailo_backend.dto.auth.request.LoginUserRequest
+import com.trailoapp.trailo_backend.dto.auth.request.RegisterUserRequest
+import com.trailoapp.trailo_backend.dto.auth.response.AuthResponse
+import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus

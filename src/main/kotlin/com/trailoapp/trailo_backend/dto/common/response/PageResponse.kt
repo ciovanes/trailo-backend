@@ -1,4 +1,4 @@
-package com.trailoapp.trailo_backend.dto.response
+package com.trailoapp.trailo_backend.dto.common.response
 
 data class PageResponse<T>(
     val content: List<T>,

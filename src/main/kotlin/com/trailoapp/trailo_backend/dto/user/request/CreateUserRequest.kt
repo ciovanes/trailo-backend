@@ -1,4 +1,4 @@
-package com.trailoapp.trailo_backend.dto.request
+package com.trailoapp.trailo_backend.dto.user.request
 
 data class CreateUserRequest(
     val email: String,

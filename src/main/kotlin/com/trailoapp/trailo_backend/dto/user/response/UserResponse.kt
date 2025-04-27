@@ -1,7 +1,7 @@
-package com.trailoapp.trailo_backend.dto.response
+package com.trailoapp.trailo_backend.dto.user.response
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
-import java.util.*
+import java.util.UUID
 
 data class UserResponse(
     val uuid: UUID,

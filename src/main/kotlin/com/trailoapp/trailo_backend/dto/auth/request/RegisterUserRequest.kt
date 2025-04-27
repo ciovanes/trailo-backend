@@ -1,9 +1,9 @@
-package com.trailoapp.trailo_backend.dto.request
-import jakarta.validation.constraints.NotBlank
+package com.trailoapp.trailo_backend.dto.auth.request
+
 import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
-
 
 data class RegisterUserRequest (
     @field:NotBlank(message = "Email must not be blank")

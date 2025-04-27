@@ -1,6 +1,6 @@
 package com.trailoapp.trailo_backend.exception
 
-import com.trailoapp.trailo_backend.dto.response.ErrorResponse
+import com.trailoapp.trailo_backend.dto.common.response.ErrorResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
