@@ -19,16 +19,16 @@ data class UserEntity (
     val username: String,
 
     @Column(nullable = true)
-    val name: String? = null,
+    var name: String? = null,
 
     @Column(nullable = true)
-    val surname: String? = null,
+    var surname: String? = null,
 
     @Column(name = "profile_picture", nullable = true)
-    val profileImageUrl: String? = null,
+    var profileImageUrl: String? = null,
 
     @Column(nullable = true)
-    val country: String? = null,
+    var country: String? = null,
 
     @Column(name = "cognito_id", nullable = false, unique = true)
     val cognitoId: String,

@@ -1,6 +1,7 @@
 package com.trailoapp.trailo_backend.service
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
+import com.trailoapp.trailo_backend.dto.user.request.UpdateUserRequest
 import com.trailoapp.trailo_backend.repository.UserRepository
 import jakarta.transaction.Transactional
 import org.springframework.data.domain.Page
@@ -35,6 +36,19 @@ class UserService(private val userRepository: UserRepository) {
         return userRepository.save(userEntity)
     }
 
+    @Transactional
+    fun updateUser(uuid: UUID, updateRequest: UpdateUserRequest): UserEntity {
+        val user = findUserById(uuid)
+            ?: throw IllegalArgumentException("User does not exist: $uuid")
+
+        updateRequest.name?.let { user.name = it }
+        updateRequest.surname?.let { user.surname = it }
+        updateRequest.profileImageUrl?.let { user.profileImageUrl = it }
+        updateRequest.country?.let { user.country = it }
+
+        return userRepository.save(user)
+    }
+
     fun findUserById(uuid: UUID): UserEntity? {
         return userRepository.findByIdOrNull(uuid)
     }
@@ -45,6 +59,10 @@ class UserService(private val userRepository: UserRepository) {
 
     fun findUserByUsername(username: String): UserEntity? {
         return userRepository.findByUsername(username).orElse(null)
+    }
+
+    fun findUserByCognitoId(cognitoId: String): UserEntity? {
+        return userRepository.findByCognitoId(cognitoId).orElse(null)
     }
 
     fun getAllUsers(): List<UserEntity> {
