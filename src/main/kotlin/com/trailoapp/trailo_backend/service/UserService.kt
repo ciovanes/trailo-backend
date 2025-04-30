@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class UserService(private val userRepository: UserRepository) {
+class UserService(private val userRepository: UserRepository, private val cognitoService: CognitoService) {
 
     @Transactional
     fun createUser(email: String, username: String, name: String?, surname: String?, profileImageUrl: String?, country: String?, cognitoId: String): UserEntity {
@@ -87,5 +87,11 @@ class UserService(private val userRepository: UserRepository) {
 
     fun searchBySurname(query: String, pageable: Pageable): Page<UserEntity> {
         return userRepository.searchBySurnameContainingIgnoreCase(query, pageable)
+    }
+
+    @Transactional
+    fun deleteUser(uuid: UUID, username: String) {
+        cognitoService.deleteUser(username)
+        userRepository.deleteById(uuid)
     }
 }

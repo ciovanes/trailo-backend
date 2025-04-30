@@ -4,10 +4,12 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminConfirmSignUpRequest
+import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminDeleteUserRequest
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitiateAuthRequest
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AttributeType
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthFlowType
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthenticationResultType
+import software.amazon.awssdk.services.cognitoidentityprovider.model.DeleteUserRequest
 import software.amazon.awssdk.services.cognitoidentityprovider.model.SignUpRequest
 import java.util.Base64
 import javax.crypto.Mac
@@ -17,7 +19,6 @@ import javax.crypto.spec.SecretKeySpec
 @Service
 class CognitoService(
     private val cognitoClient: CognitoIdentityProviderClient,
-    private val userService: UserService
 ) {
 
     @Value("\${aws.cognito.userPoolId}")
@@ -105,6 +106,18 @@ class CognitoService(
 
         val response = cognitoClient.adminInitiateAuth(request)
         return response.authenticationResult()
+    }
+
+    /*
+    Delete user
+     */
+    fun deleteUser(username: String) {
+        val deleteUserRequest = AdminDeleteUserRequest.builder()
+            .userPoolId(userPoolId)
+            .username(username)
+            .build()
+
+        cognitoClient.adminDeleteUser(deleteUserRequest)
     }
 
     private fun calculateSecretHash(username: String): String {

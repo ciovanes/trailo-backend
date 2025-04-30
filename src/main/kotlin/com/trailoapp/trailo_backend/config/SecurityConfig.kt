@@ -47,6 +47,7 @@ class SecurityConfig {
                 // users endpoints
                 requests.requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
                 requests.requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").authenticated()
+                requests.requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").authenticated()
             }
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->

@@ -1,13 +1,10 @@
 package com.trailoapp.trailo_backend.controller
 
-import com.auth0.jwt.JWT
-import com.trailoapp.trailo_backend.dto.user.request.CreateUserRequest
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.dto.user.request.UpdateUserRequest
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.service.UserService
 import jakarta.validation.Valid
-import org.apache.coyote.Response
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
@@ -15,7 +12,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
-import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -118,5 +114,20 @@ class UserController(private val userService: UserService) {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(UserResponse.fromUser(updatedUser))
+    }
+
+    /*
+    Delete current user
+     */
+    @DeleteMapping("/sayonara_baby")
+    fun deleteUser(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<Unit> {
+        val cognitoUserId = jwt.claims["sub"] as String
+
+        val user = userService.findUserByCognitoId(cognitoUserId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        userService.deleteUser(user.uuid, user.username)
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 }
