@@ -72,4 +72,20 @@ class UserService(private val userRepository: UserRepository) {
     fun getAllUsers(pageable: Pageable): Page<UserEntity> {
         return userRepository.findAll(pageable)
     }
+
+    fun searchByUsername(query: String, pageable: Pageable): Page<UserEntity> {
+        return userRepository.searchByUsernameContainingIgnoreCase(query, pageable)
+    }
+
+    fun searchByName(query: String, pageable: Pageable): Page<UserEntity> {
+        return userRepository.searchByNameContainingIgnoreCase(query, pageable)
+    }
+
+    fun searchByCountry(query: String, pageable: Pageable): Page<UserEntity> {
+        return userRepository.searchByCountryContainingIgnoreCase(query, pageable)
+    }
+
+    fun searchBySurname(query: String, pageable: Pageable): Page<UserEntity> {
+        return userRepository.searchBySurnameContainingIgnoreCase(query, pageable)
+    }
 }

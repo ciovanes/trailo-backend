@@ -7,7 +7,9 @@ import com.trailoapp.trailo_backend.dto.user.request.UpdateUserRequest
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.service.UserService
 import jakarta.validation.Valid
+import org.apache.coyote.Response
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -19,6 +21,9 @@ import java.util.*
 @RequestMapping("/api/v1/users")
 class UserController(private val userService: UserService) {
 
+    /*
+    GET all users with pagination
+     */
     @GetMapping
     fun getAllUsers(
         @RequestParam(required = false, defaultValue = "0") page: Int,
@@ -44,30 +49,60 @@ class UserController(private val userService: UserService) {
             .body(response)
     }
 
-    @GetMapping("/id/{uuid}")
-    fun getUserByEmail(@PathVariable uuid: UUID): ResponseEntity<UserResponse> {
-        val user = userService.findUserById(uuid)
-            ?: return ResponseEntity.notFound().build()
+    /*
+    Search users by different fields
+     */
+    @GetMapping("/search")
+    fun searchUsers(
+        @RequestParam(required = false, defaultValue = "") query: String,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @RequestParam(required = false, defaultValue = "username") searchBy: String,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<PageResponse<UserResponse>> {
 
-        return ResponseEntity.ok(UserResponse.fromUser(user))
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "username"))
+
+        val userPage = when (searchBy.lowercase()) {
+            "username" -> userService.searchByUsername(query, pageable)
+            "name" -> userService.searchByName(query, pageable)
+            "surname" -> userService.searchBySurname(query, pageable)
+            "country" -> userService.searchByCountry(query, pageable)
+            else -> userService.searchByUsername(query, pageable)
+        }
+
+        val response = PageResponse(
+            content = userPage.content.map { UserResponse.fromUser(it) },
+            pageNumber = page,
+            pageSize = size,
+            totalElements = userPage.totalElements,
+            totalPages = userPage.totalPages,
+            isLast = userPage.isLast,
+        )
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(response)
     }
 
-    @GetMapping("/email/{email}")
-    fun getUserByEmail(@PathVariable email: String): ResponseEntity<UserResponse> {
-        val user = userService.findUserByEmail(email)
-            ?: return ResponseEntity.notFound().build()
+    /*
+    GET current user info
+     */
+    @GetMapping("/me")
+    fun getCurrentUser(@AuthenticationPrincipal jwt: Jwt): ResponseEntity<UserResponse> {
+        val cognitoUserId = jwt.claims["sub"] as String
 
-        return ResponseEntity.ok(UserResponse.fromUser(user))
+        val user = userService.findUserByCognitoId(cognitoUserId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(UserResponse.fromUser(user))
     }
 
-    @GetMapping("/username/{username}")
-    fun getUserByUsername(@PathVariable username: String): ResponseEntity<UserResponse> {
-        val user = userService.findUserByUsername(username)
-            ?: return ResponseEntity.notFound().build()
-
-        return ResponseEntity.ok(UserResponse.fromUser(user))
-    }
-
+    /*
+    Update current user data
+     */
     @PatchMapping
     fun updateUser(
         @Valid @RequestBody updateUserRequest: UpdateUserRequest,
