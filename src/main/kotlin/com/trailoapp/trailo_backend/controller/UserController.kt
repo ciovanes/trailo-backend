@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -80,6 +81,20 @@ class UserController(private val userService: UserService) {
             .status(HttpStatus.OK)
             .body(response)
     }
+    
+    /*
+    GET user by UUID
+     */
+    @GetMapping("/id/{uuid}")
+    fun getUserByEmail(@PathVariable uuid: UUID, @AuthenticationPrincipal jwt: Jwt): ResponseEntity<UserResponse> {
+        val user = userService.findUserById(uuid)
+            ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(UserResponse.fromUser(user))
+    }
+
 
     /*
     GET current user info
@@ -99,7 +114,7 @@ class UserController(private val userService: UserService) {
     /*
     Update current user data
      */
-    @PatchMapping
+    @PatchMapping("/me")
     fun updateUser(
         @Valid @RequestBody updateUserRequest: UpdateUserRequest,
         @AuthenticationPrincipal jwt: Jwt
