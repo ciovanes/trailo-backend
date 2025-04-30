@@ -9,7 +9,6 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.AdminInitia
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AttributeType
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthFlowType
 import software.amazon.awssdk.services.cognitoidentityprovider.model.AuthenticationResultType
-import software.amazon.awssdk.services.cognitoidentityprovider.model.DeleteUserRequest
 import software.amazon.awssdk.services.cognitoidentityprovider.model.SignUpRequest
 import java.util.Base64
 import javax.crypto.Mac

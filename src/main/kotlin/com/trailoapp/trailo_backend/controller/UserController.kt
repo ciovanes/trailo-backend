@@ -81,7 +81,7 @@ class UserController(private val userService: UserService) {
             .status(HttpStatus.OK)
             .body(response)
     }
-    
+
     /*
     GET user by UUID
      */
