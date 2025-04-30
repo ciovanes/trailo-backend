@@ -2,6 +2,7 @@ package com.trailoapp.trailo_backend.domain.core
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -32,6 +33,13 @@ data class UserEntity (
 
     @Column(name = "cognito_id", nullable = false, unique = true)
     val cognitoId: String,
+
+    @Column(name = "last_login_at", nullable = true)
+    var lastLoginAt: OffsetDateTime? = null,
+
+    @UpdateTimestamp
+    @Column(name = "last_modified_at", nullable = false)
+    val lastModifiedAt: OffsetDateTime = OffsetDateTime.now(),
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

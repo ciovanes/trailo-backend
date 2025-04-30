@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional
 import com.trailoapp.trailo_backend.dto.auth.request.RegisterUserRequest
 import com.trailoapp.trailo_backend.dto.auth.response.AuthResponse
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
+import java.time.OffsetDateTime
 
 
 @Service
@@ -43,6 +44,12 @@ class AuthService(
             userService.findUserByEmail(request.username)
         } else {
             userService.findUserByUsername(request.username)
+        }
+
+        // Update last login date
+        user?.let {
+            it.lastLoginAt = OffsetDateTime.now()
+            userService.saveUser(it)
         }
 
         return AuthResponse(

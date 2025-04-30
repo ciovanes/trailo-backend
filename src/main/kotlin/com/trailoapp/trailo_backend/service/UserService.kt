@@ -14,6 +14,11 @@ import java.util.*
 class UserService(private val userRepository: UserRepository, private val cognitoService: CognitoService) {
 
     @Transactional
+    fun saveUser(userEntity: UserEntity): UserEntity {
+        return userRepository.save(userEntity)
+    }
+
+    @Transactional
     fun createUser(email: String, username: String, name: String?, surname: String?, profileImageUrl: String?, country: String?, cognitoId: String): UserEntity {
         if (userRepository.existsByEmail(email)) {
             throw IllegalArgumentException("Email already exists: $email")

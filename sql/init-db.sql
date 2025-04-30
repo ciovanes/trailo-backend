@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS core."user"(
     surname text,
     profile_picture text,
     country text,
+    last_login_at timestamptz,
+    last_modified_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT user_pk PRIMARY KEY (uuid),
     CONSTRAINT uk_email UNIQUE (email),

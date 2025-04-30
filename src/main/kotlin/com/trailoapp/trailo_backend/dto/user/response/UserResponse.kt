@@ -11,7 +11,9 @@ data class UserResponse(
     val name: String? = null,
     val surname: String? = null,
     val profileImageUrl: String? = null,
-    val country: String? = null
+    val country: String? = null,
+    val lastLoginAt: String? = null,
+    val lastModifiedAt: String? = null
     ) {
     companion object {
         fun fromUser(userEntity: UserEntity): UserResponse {
@@ -23,7 +25,9 @@ data class UserResponse(
                 name = userEntity.name,
                 surname = userEntity.surname,
                 profileImageUrl = userEntity.profileImageUrl,
-                country = userEntity.country
+                country = userEntity.country,
+                lastLoginAt = userEntity.lastLoginAt?.toString(),
+                lastModifiedAt = userEntity.lastModifiedAt.toString()
             )
         }
     }
