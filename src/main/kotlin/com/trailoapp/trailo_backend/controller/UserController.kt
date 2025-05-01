@@ -95,6 +95,19 @@ class UserController(private val userService: UserService) {
             .body(UserResponse.fromUser(user))
     }
 
+    /*
+    GET user by username
+     */
+    @GetMapping("/{username}")
+    fun getUserByUsername(@PathVariable username: String): ResponseEntity<UserResponse> {
+        val user = userService.findUserByUsername(username)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(UserResponse.fromUser(user))
+    }
+
 
     /*
     GET current user info
