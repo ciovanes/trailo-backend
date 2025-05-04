@@ -48,6 +48,12 @@ class SecurityConfig {
                 requests.requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
                 requests.requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").authenticated()
                 requests.requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").authenticated()
+
+                // friendships endpoints
+                requests.requestMatchers(HttpMethod.GET, "/api/v1/friendships/**").authenticated()
+                requests.requestMatchers(HttpMethod.POST, "/api/v1/friendships/**").authenticated()
+                requests.requestMatchers(HttpMethod.PATCH, "/api/v1/friendships/**").authenticated()
+                requests.requestMatchers(HttpMethod.DELETE, "/api/v1/friendships/**").authenticated()
             }
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->
