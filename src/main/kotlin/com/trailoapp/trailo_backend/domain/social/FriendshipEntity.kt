@@ -4,6 +4,7 @@ import com.trailoapp.trailo_backend.config.FriendshipStatusConverter
 import com.trailoapp.trailo_backend.domain.core.UserEntity
 import com.trailoapp.trailo_backend.domain.enum.FriendshipStatus
 import jakarta.persistence.*
+import org.hibernate.annotations.ColumnTransformer
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.OffsetDateTime
@@ -25,7 +26,11 @@ data class FriendshipEntity (
     val friend: UserEntity,
 
     @Column(name = "status", nullable = false, columnDefinition = "social.friendship_status")
-    @Convert(converter = FriendshipStatusConverter::class)
+    @Enumerated(EnumType.STRING)
+    @ColumnTransformer(
+        read = "status::text",
+        write = "?::social.friendship_status"
+    )
     var status: FriendshipStatus,
 
     @CreationTimestamp
