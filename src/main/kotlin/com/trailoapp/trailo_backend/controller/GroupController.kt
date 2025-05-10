@@ -1,8 +1,11 @@
 package com.trailoapp.trailo_backend.controller
 
+import com.trailoapp.trailo_backend.domain.enum.MembershipStatus
 import com.trailoapp.trailo_backend.domain.social.GroupEntity
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.dto.group.request.CreateGroupRequest
+import com.trailoapp.trailo_backend.dto.group.request.UpdateStatusRequest
+import com.trailoapp.trailo_backend.dto.group.response.GroupMemberResponse
 import com.trailoapp.trailo_backend.dto.group.response.GroupResponse
 import com.trailoapp.trailo_backend.dto.group.response.UserGroupResponse
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
@@ -164,4 +167,114 @@ class GroupController(
             .status(HttpStatus.OK)
             .body(mapOf("isFavorite" to isFavorite))
     }
+
+    /*
+    Get all pending requests from a private group
+     */
+    @GetMapping("/{groupId}/requests")
+    fun getPendingRequests(
+        @PathVariable groupId: UUID,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<PageResponse<UserResponse>> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        val pageable = PageRequest.of(page, size)
+
+        val pendingRequests = groupService.getPendingRequests(user.uuid, groupId, pageable)
+
+        val response = PageResponse(
+            content = pendingRequests.content.map { UserResponse.fromUser(it) },
+            pageNumber = page,
+            pageSize = size,
+            totalElements = pendingRequests.totalElements,
+            totalPages = pendingRequests.totalPages,
+            isLast = pendingRequests.isLast
+        )
+
+        return ResponseEntity.status(HttpStatus.OK).body(response)
+    }
+
+    @PostMapping("/{groupId}/requests/{userId}/accept")
+    fun acceptMemberRequest(
+        @PathVariable groupId: UUID,
+        @PathVariable userId: UUID,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<Unit> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        groupService.updateMembershipRequest(user.uuid, groupId, userId, MembershipStatus.ACCEPTED)
+
+        return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+    @PostMapping("/{groupId}/requests/{userId}/reject")
+    fun rejectMemberRequest(
+        @PathVariable groupId: UUID,
+        @PathVariable userId: UUID,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<Unit> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        groupService.updateMembershipRequest(user.uuid, groupId, userId, MembershipStatus.REJECTED)
+
+        return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+    /*
+    Get my groups
+     */
+    @GetMapping("/my")
+    fun getMyGroups(
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<PageResponse<GroupResponse>> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        val pageable = PageRequest.of(page, size)
+
+        val myGroups = groupService.getMyGroups(user.uuid, pageable)
+
+        val response = PageResponse(
+            content = myGroups.content.map { GroupResponse.fromEntity(it) },
+            pageNumber = page,
+            pageSize = size,
+            totalElements = myGroups.totalElements,
+            totalPages = myGroups.totalPages,
+            isLast = myGroups.isLast
+        )
+
+        return ResponseEntity.status(HttpStatus.OK).body(response)
+    }
+
+    @GetMapping("/{groupId}/members")
+    fun getMembers(
+        @PathVariable groupId: UUID,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<GroupMemberResponse> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        val pageable = PageRequest.of(page, size)
+
+        val response = groupService.getGroupMembers(user.uuid, groupId, pageable)
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(response)
+    }
+
 }

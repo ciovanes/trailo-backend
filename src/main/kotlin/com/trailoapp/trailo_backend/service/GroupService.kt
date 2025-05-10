@@ -5,7 +5,12 @@ import com.trailoapp.trailo_backend.domain.enum.GroupRoles
 import com.trailoapp.trailo_backend.domain.enum.MembershipStatus
 import com.trailoapp.trailo_backend.domain.social.GroupEntity
 import com.trailoapp.trailo_backend.domain.social.UserGroupEntity
+import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.dto.group.request.CreateGroupRequest
+import com.trailoapp.trailo_backend.dto.group.response.GroupMemberResponse
+import com.trailoapp.trailo_backend.dto.group.response.PrivateGroupMembersResponse
+import com.trailoapp.trailo_backend.dto.group.response.PublicGroupMembersResponse
+import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.repository.GroupRepository
 import com.trailoapp.trailo_backend.repository.UserGroupRepository
 import jakarta.transaction.Transactional
@@ -84,10 +89,15 @@ class GroupService(
         val group = groupRepository.findById(group)
             .orElseThrow{ Exception("Group not found") }
 
+        val userGroupStatus = when {
+            group.isPrivate -> MembershipStatus.PENDING
+            else -> MembershipStatus.ACCEPTED
+        }
+
         val userGroup = UserGroupEntity(
             group = group,
             user = user,
-            status = MembershipStatus.ACCEPTED,
+            status = userGroupStatus,
             role = GroupRoles.MEMBER,
             invitedBy = user.uuid,
             isFavorite = false
@@ -109,5 +119,66 @@ class GroupService(
         return userGroupRepository.findByGroup_UuidAndUser_Uuid(group, user)
             .orElseThrow { Exception("UserGroup not found") } // TODO: ResourceNotFoundException
             .isFavorite
+    }
+
+    fun getPendingRequests(userId: UUID, groupId: UUID, pageable: Pageable): Page<UserEntity> {
+        val havePermissions = userGroupRepository.userHavePermissions(userId, groupId)
+
+        if (havePermissions) {
+            return userGroupRepository.getPendingRequests(groupId, pageable)
+        }
+
+        throw Exception("User does not have permissions to view pending requests for this group") // TODO: PermissionDeniedException
+    }
+
+    fun getMyGroups(userId: UUID, pageable: Pageable): Page<GroupEntity> {
+        return userGroupRepository.findMyGroups(userId, pageable)
+    }
+
+    fun getGroupMembers(userId: UUID, groupId: UUID, pageable: Pageable): GroupMemberResponse {
+
+        val group = groupRepository.findById(groupId)
+            .orElseThrow { Exception("Group not found") }
+
+        val isMember = userGroupRepository.userIsMemberOfGroup(userId, groupId)
+
+        val memberCount = userGroupRepository.countAcceptedMembersByGroupId(groupId)
+
+        return if (group.isPrivate && !isMember) {
+            PrivateGroupMembersResponse(
+                totalElements = memberCount
+            )
+
+        } else {
+            val members = userGroupRepository.findMembersByGroupId(groupId, pageable)
+
+            PublicGroupMembersResponse(
+                members = members.content.map { UserResponse.fromUser(it) },
+                pageNumber = members.number,
+                pageSize = members.size,
+                totalElements = members.totalElements,
+                totalPages = members.totalPages,
+                isLast = members.isLast
+            )
+        }
+    }
+
+    fun updateMembershipRequest(adminId: UUID, groupId: UUID, userId: UUID, newStatus: MembershipStatus) {
+        val havePermissions = userGroupRepository.userHavePermissions(adminId, groupId)
+
+        if (havePermissions) {
+            val userGroup = userGroupRepository.findByGroup_UuidAndUser_Uuid(groupId, userId)
+                .orElseThrow { Exception("UserGroup not found") }
+
+            if (userGroup.status == MembershipStatus.PENDING) {
+                userGroup.status = newStatus
+                userGroupRepository.save(userGroup)
+            } else {
+                throw Exception("The membership status cannot be changed") //TODO: InvalidMembershipStatusException
+            }
+
+        } else {
+            throw Exception("User does not have permissions to do this operation") // TODO: PermissionDeniedException
+        }
     }
 }
