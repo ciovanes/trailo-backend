@@ -4,6 +4,9 @@ import com.trailoapp.trailo_backend.domain.enum.MembershipStatus
 import com.trailoapp.trailo_backend.domain.social.GroupEntity
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.dto.group.request.CreateGroupRequest
+import com.trailoapp.trailo_backend.dto.group.request.InviteUsersRequest
+import com.trailoapp.trailo_backend.dto.group.request.UpdateGroupRequest
+import com.trailoapp.trailo_backend.dto.group.request.UpdateRoleRequest
 import com.trailoapp.trailo_backend.dto.group.request.UpdateStatusRequest
 import com.trailoapp.trailo_backend.dto.group.response.GroupMemberResponse
 import com.trailoapp.trailo_backend.dto.group.response.GroupResponse
@@ -24,8 +27,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -275,6 +280,93 @@ class GroupController(
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(response)
+    }
+
+    @PatchMapping("/{groupId}")
+    fun updateGroup(
+        @PathVariable groupId: UUID,
+        @Valid @RequestBody request: UpdateGroupRequest,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<GroupResponse> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        val updatedGroup = groupService.updateGroup(user.uuid, groupId, request)
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(GroupResponse.fromEntity(updatedGroup))
+    }
+
+    @PostMapping("/{groupId}/leave")
+    fun leaveGroup(
+        @PathVariable groupId: UUID,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<Unit> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        groupService.leaveGroup(user.uuid, groupId)
+
+        return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+    @DeleteMapping("/{groupId}/members/{memberId}")
+    fun kickMember(
+        @PathVariable groupId: UUID,
+        @PathVariable memberId: UUID,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<Unit> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        groupService.kickMember(user.uuid, groupId, memberId)
+
+        return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+    @PatchMapping("/{groupId}/members/{memberId}/role")
+    fun updateMemberRole(
+        @PathVariable groupId: UUID,
+        @PathVariable memberId: UUID,
+        @Valid @RequestBody request: UpdateRoleRequest,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<Unit> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        groupService.updateMemberRole(user.uuid, groupId, memberId, request.role)
+
+        return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+    @GetMapping("/favorites")
+    fun getFavoriteGroups(
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @AuthenticationPrincipal jwt: Jwt
+    ): ResponseEntity<PageResponse<GroupResponse>> {
+        val cognitoId = jwt.claims["sub"] as String
+        val user = userService.findUserByCognitoId(cognitoId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+
+        val pageable = PageRequest.of(page, size)
+        val favoritesGroups = groupService.getFavoriteGroups(user.uuid, pageable)
+
+        val response = PageResponse(
+            content = favoritesGroups.content.map { GroupResponse.fromEntity(it) },
+            pageNumber = page,
+            pageSize = size,
+            totalElements = favoritesGroups.totalElements,
+            totalPages = favoritesGroups.totalPages,
+            isLast = favoritesGroups.isLast
+        )
+
+        return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
 }

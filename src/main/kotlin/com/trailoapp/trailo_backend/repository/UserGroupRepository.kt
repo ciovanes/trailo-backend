@@ -74,4 +74,14 @@ interface UserGroupRepository: JpaRepository<UserGroupEntity, UUID> {
         )
     """)
     fun userIsMemberOfGroup(userId: UUID, groupId: UUID): Boolean
+
+    @Query(value =
+    """
+        SELECT g FROM GroupEntity g
+        JOIN UserGroupEntity ug ON ug.group.uuid = g.uuid
+        WHERE ug.user.uuid = :userId
+        AND ug.isFavorite = true
+        AND ug.status = 'ACCEPTED'
+    """)
+    fun findFavoriteGroups(userId: UUID, pageable: Pageable): Page<GroupEntity>
 }

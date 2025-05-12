@@ -4,6 +4,7 @@ import com.trailoapp.trailo_backend.domain.core.UserEntity
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import java.util.*
 
@@ -19,4 +20,11 @@ interface UserRepository : JpaRepository<UserEntity, UUID> {
     fun searchByNameContainingIgnoreCase(name: String, pageable: Pageable): Page<UserEntity>
     fun searchBySurnameContainingIgnoreCase(surname: String, pageable: Pageable): Page<UserEntity>
     fun searchByCountryContainingIgnoreCase(country: String, pageable: Pageable): Page<UserEntity>
+
+    @Query(value =
+        """
+            SELECT u FROM UserEntity u WHERE u.uuid IN :uuids
+        """
+    )
+    fun findAllByUuidIn(uuids: List<UUID>): List<UserEntity>
 }

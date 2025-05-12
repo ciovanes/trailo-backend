@@ -7,14 +7,17 @@ import com.trailoapp.trailo_backend.domain.social.GroupEntity
 import com.trailoapp.trailo_backend.domain.social.UserGroupEntity
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.dto.group.request.CreateGroupRequest
+import com.trailoapp.trailo_backend.dto.group.request.UpdateGroupRequest
 import com.trailoapp.trailo_backend.dto.group.response.GroupMemberResponse
 import com.trailoapp.trailo_backend.dto.group.response.PrivateGroupMembersResponse
 import com.trailoapp.trailo_backend.dto.group.response.PublicGroupMembersResponse
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.repository.GroupRepository
 import com.trailoapp.trailo_backend.repository.UserGroupRepository
+import com.trailoapp.trailo_backend.repository.UserRepository
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
+import org.springframework.data.crossstore.ChangeSetPersister
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
@@ -24,7 +27,8 @@ import java.util.UUID
 @Service
 class GroupService(
     private val groupRepository: GroupRepository,
-    private val userGroupRepository: UserGroupRepository
+    private val userGroupRepository: UserGroupRepository,
+    private val userRepository: UserRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
@@ -181,4 +185,85 @@ class GroupService(
             throw Exception("User does not have permissions to do this operation") // TODO: PermissionDeniedException
         }
     }
+
+    @Transactional
+    fun updateGroup(userId: UUID, groupId: UUID, request: UpdateGroupRequest): GroupEntity {
+        val group = groupRepository.findById(groupId)
+            .orElseThrow { Exception("Group not found") } // TODO: ResourceNotFoundException
+
+        if (!userGroupRepository.userHavePermissions(userId, groupId)) {
+            throw Exception("User does not have permission to do this operation") // TODO: PermissionDeniedException
+        }
+
+        request.description?.let { group.description = it }
+        request.isPrivate?.let { group.isPrivate = it }
+        request.imageUrl?.let { group.imageUrl = it }
+
+        return groupRepository.save(group)
+    }
+
+    @Transactional
+    fun leaveGroup(userId: UUID, groupId: UUID) {
+        val membership = userGroupRepository.findByGroup_UuidAndUser_Uuid(groupId, userId)
+            .orElseThrow { Exception("You are not member of this group") } // TODO: ResourceNotFoundException
+
+        if (membership.role == GroupRoles.LEADER) {
+            throw Exception("Leader cannot leave the group")
+        }
+
+        userGroupRepository.delete(membership)
+    }
+
+    fun kickMember(adminId: UUID, groupId: UUID, userId: UUID) {
+        if (adminId == userId) {
+            throw Exception("You can't kick yourself from the group")
+        }
+
+        if (!userGroupRepository.userHavePermissions(adminId, groupId)) {
+            throw Exception("User does not have permission to do this operation") // TODO: PermissionDeniedException
+        }
+
+        val membership = userGroupRepository.findByGroup_UuidAndUser_Uuid(groupId, userId)
+            .orElseThrow{ Exception("User is not member of the group") } // TODO: ResourceNotFoundException
+
+        val adminMembership = userGroupRepository.findByGroup_UuidAndUser_Uuid(groupId, adminId)
+            .orElseThrow { Exception() }
+
+        if (adminMembership.role == GroupRoles.CO_LEADER &&
+            (membership.role == GroupRoles.LEADER || membership.role == GroupRoles.CO_LEADER)) {
+            throw Exception("You cannot kick a leader or co-leader from the group") // TODO: PermissionDeniedException
+        }
+
+        userGroupRepository.delete(membership)
+    }
+
+    @Transactional
+    fun updateMemberRole(adminId: UUID, groupId: UUID, userId: UUID, newRole: GroupRoles) {
+        val adminMembership = userGroupRepository.findByGroup_UuidAndUser_Uuid(groupId, adminId)
+            .orElseThrow { Exception("You are not member of the group") } // TODO: ResourceNotFoundException
+
+        if (adminMembership.role != GroupRoles.LEADER) {
+            throw Exception("User does not have permission to do this operation") // TODO: PermissionDeniedException
+        }
+
+        val membership = userGroupRepository.findByGroup_UuidAndUser_Uuid(groupId, userId)
+            .orElseThrow { Exception("User is not member of the group") } // TODO: ResourceNotFoundException
+
+        if (membership.role == GroupRoles.LEADER) {
+            throw Exception("Can't change the role of the leader")
+        }
+
+        if (newRole == GroupRoles.LEADER) {
+            adminMembership.role = GroupRoles.CO_LEADER
+            userGroupRepository.save(adminMembership)
+        }
+
+        membership.role = newRole
+        userGroupRepository.save(membership)
+    }
+
+    fun getFavoriteGroups(userId: UUID, pageable: Pageable): Page<GroupEntity> {
+        return userGroupRepository.findFavoriteGroups(userId, pageable)
+    }
+
 }

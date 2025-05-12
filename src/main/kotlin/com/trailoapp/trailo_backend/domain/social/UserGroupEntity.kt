@@ -42,7 +42,7 @@ data class UserGroupEntity(
     var role: GroupRoles,
 
     @Column(name = "invited_by", nullable = false)
-    val invitedBy: UUID,
+    var invitedBy: UUID,
 
     @Column(name = "is_favorite")
     var isFavorite: Boolean = false,
