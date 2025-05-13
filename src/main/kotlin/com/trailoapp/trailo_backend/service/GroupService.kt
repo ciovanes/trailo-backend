@@ -33,6 +33,13 @@ class GroupService(
 
     // ===== GROUP MANAGEMENT =====
 
+    /**
+     * Creates a new group with the provided [CreateGroupRequest].
+     *
+     * @param groupRequest The [CreateGroupRequest] containing the fields of the new group.
+     * @param owner The [UserEntity] representing the owner of the group.
+     * @return The new [GroupEntity] created with the provided data.
+     */
     @Transactional
     fun createGroup(groupRequest: CreateGroupRequest, owner: UserEntity): GroupEntity {
         if (groupRepository.existsByName(groupRequest.name)) {
@@ -61,10 +68,24 @@ class GroupService(
         return group
     }
 
+    /**
+     * Finds a group with a specified UUID.
+     *
+     * @param uuid The [UUID] of the group to find.
+     * @return The [GroupEntity] with the specified UUID, or null if not found.
+     */
     fun findGroupByUuid(uuid: UUID): GroupEntity? {
         return groupRepository.findByIdOrNull(uuid)
     }
 
+    /**
+     * Update the group with the specified UUID with the provided [UpdateGroupRequest].
+     *
+     * @param userId The [UUID] of the user making the request.
+     * @param groupId The [UUID] of the group to update.
+     * @param request The [UpdateGroupRequest] containing the fields to update.
+     * @return The updated [GroupEntity]
+     */
     @Transactional
     fun updateGroup(userId: UUID, groupId: UUID, request: UpdateGroupRequest): GroupEntity {
         val group = getGroupByUuid(groupId)
@@ -80,6 +101,12 @@ class GroupService(
         return groupRepository.save(group)
     }
 
+    /**
+     * Deletes the group with the specified UUID.
+     *
+     * @param groupId The [UUID] of the group to delete.
+     * @param userId The [UUID] of the user making the request.
+     */
     @Transactional
     fun deleteGroup(groupId: UUID, userId: UUID) {
         val group = getGroupByUuid(groupId)
@@ -91,6 +118,12 @@ class GroupService(
 
     // ===== GROUP LISTING AND SEARCH =====
 
+    /**
+     * Finds all the groups in the database.
+     *
+     * @param pageable The [Pageable] object containing pagination and sorting information.
+     * @return A [Page] of [GroupEntity] objects representing all the groups in the database.
+     */
     fun getAllGroups(pageable: Pageable): Page<GroupEntity> {
         return groupRepository.findAll(pageable)
     }
@@ -113,9 +146,16 @@ class GroupService(
 
     // ===== GROUP MEMBERSHIP =====
 
+    /**
+     * Joins a group with the specified [UUID]
+     *
+     * @param user The [UserEntity] that wants to join the group.
+     * @param groupId The [UUID] of the group to join.
+     * @return The [UserGroupEntity] representing the membership.
+     */
     @Transactional
-    fun joinGroup(user: UserEntity, group: UUID): UserGroupEntity {
-        val group = getGroupByUuid(group)
+    fun joinGroup(user: UserEntity, groupId: UUID): UserGroupEntity {
+        val group = getGroupByUuid(groupId)
 
         userGroupRepository.findByGroup_UuidAndUser_Uuid(group.uuid, user.uuid)
             .ifPresent { throw BusinessRuleException("User is already a member of this group") }
@@ -132,6 +172,12 @@ class GroupService(
         )
     }
 
+    /**
+     * Leave a group with the specified [UUID].
+     *
+     * @param userId The [UUID] of the user that wants to leave the group.
+     * @param groupId The [UUID] of the group to leave.
+     */
     @Transactional
     fun leaveGroup(userId: UUID, groupId: UUID) {
         val membership = getUserMembershipOrThrow(userId, groupId)
@@ -143,6 +189,13 @@ class GroupService(
         userGroupRepository.delete(membership)
     }
 
+    /**
+     * Kick a member from a group.
+     *
+     * @param adminId The [UUID] of the user that have enough permissions to kick the member.
+     * @param groupId The [UUID] of the group to kick the member from.
+     * @param userId The [UUID] of the member to kick.
+     */
     fun kickMember(adminId: UUID, groupId: UUID, userId: UUID) {
         if (adminId == userId) {
             throw SelfActionException("kick from group")
@@ -166,6 +219,13 @@ class GroupService(
 
     // ===== ROLE AND PERMISSION MANAGEMENT =====
 
+    /**
+     * Update the role of a member in a group.
+     *
+     * @param adminId The [UUID] of the user that have enough permissions to update the role.
+     * @param groupId The [UUID] of the group to update the role in.
+     * @param userId The [UUID] of the member to update the role for.
+     */
     @Transactional
     fun updateMemberRole(adminId: UUID, groupId: UUID, userId: UUID, newRole: GroupRoles) {
         val adminMembership = getUserMembershipOrThrow(adminId, groupId)
@@ -189,6 +249,14 @@ class GroupService(
         userGroupRepository.save(membership)
     }
 
+    /**
+     * Update the membership status of a membership.
+     *
+     * @param adminId The [UUID] of the user that have enough permissions to update the membership status.
+     * @param groupId The [UUID] of the group to update the membership status.
+     * @param userId The [UUID] of the member to update the membership status for.
+     * @param newStatus The new [MembershipStatus].
+     */
     fun updateMembershipRequest(adminId: UUID, groupId: UUID, userId: UUID, newStatus: MembershipStatus) {
         verifyUserHasPermissions(adminId, groupId)
 
@@ -202,14 +270,30 @@ class GroupService(
         userGroupRepository.save(userGroup)
     }
 
-    fun getPendingRequests(userId: UUID, groupId: UUID, pageable: Pageable): Page<UserEntity> {
-        verifyUserHasPermissions(userId, groupId)
+    /**
+     * Get all the pending membership requests for a group.
+     *
+     * @param adminId The [UUID] of the user that have enough permission to view the pending membership requests.
+     * @param groupId The [UUID] of the group to view the pending memberships.
+     * @param pageable The [Pageable] object containing pagination and sorting information.
+     * @return A [Page] of [UserEntity] objects representing the pending membership requests.
+     */
+    fun getPendingRequests(adminId: UUID, groupId: UUID, pageable: Pageable): Page<UserEntity> {
+        verifyUserHasPermissions(adminId, groupId)
 
         return userGroupRepository.getPendingRequests(groupId, pageable)
     }
 
     // ===== GROUP MEMBERSHIP LISTING =====
 
+    /**
+     * Get all the members of a group.
+     *
+     * @param userId The [UUID] of the user that wants to view the members.
+     * @param groupId The [UUID] of the group to view the members.
+     * @param pageable The [Pageable] object containing pagination and sorting information.
+     * @return A [GroupMemberResponse] object containing the members and pagination information.
+     */
     fun getGroupMembers(userId: UUID, groupId: UUID, pageable: Pageable): GroupMemberResponse {
         val group = getGroupByUuid(groupId)
         val isMember = userGroupRepository.userIsMemberOfGroup(userId, groupId)
@@ -233,26 +317,38 @@ class GroupService(
 
     // ===== FAVORITE GROUPS =====
 
+    /**
+     * Toggle the favorite status of a group.
+     *
+     * @param userId The [UUID] of the user that wants to change the favorite status.
+     * @param groupId The [UUID] of the group to change the status from.
+     */
     @Transactional
-    fun toggleFavorite(user: UUID, group: UUID) {
-        val userGroup = getUserMembershipOrThrow(user, group, "You are not a member of this group")
+    fun toggleFavorite(userId: UUID, groupId: UUID) {
+        val userGroup = getUserMembershipOrThrow(userId, groupId, "You are not a member of this group")
 
         userGroup.isFavorite = !userGroup.isFavorite
         userGroupRepository.save(userGroup)
     }
 
-    fun checkIsFavorite(user: UUID, group: UUID): Boolean {
-        return getUserMembershipOrThrow(user, group, "You are not a member of this group")
+    /**
+     * Check if a user has a group in their favorite list.
+     *
+     * @param userId The [UUID] of the user to check.
+     * @param groupId The [UUID] of the group to check.
+     */
+    fun checkIsFavorite(userId: UUID, groupId: UUID): Boolean {
+        return getUserMembershipOrThrow(userId, groupId, "You are not a member of this group")
             .isFavorite
     }
 
     // ===== UTILITY METHODS =====
 
     /**
-     * Find a GroupEntity by its UUID.
+     * Find a [GroupEntity] by its UUID.
      *
-     * @param uuid The UUID of the group to find.
-     * @return The GroupEntity with the specified UUID.
+     * @param uuid The [UUID] of the group to find.
+     * @return The [GroupEntity] with the specified UUID.
      * @throws ResourceNotFoundException if the group is not found.
      */
     private fun getGroupByUuid(uuid: UUID): GroupEntity {
@@ -263,8 +359,8 @@ class GroupService(
     /**
      * Verifies that the user is a member of the group and has the manage permissions.
      *
-     * @param userId The UUID of the user to check.
-     * @param groupId The UUID of the group to check.
+     * @param userId The [UUID] of the user to check.
+     * @param groupId The [UUID] of the group to check.
      * @throws PermissionDeniedException if the user is not a member of the group or does not have enough permissions.
      */
     private fun verifyUserHasPermissions(userId: UUID, groupId: UUID){
@@ -274,12 +370,12 @@ class GroupService(
     }
 
     /**
-     * Throws a ResourceNotFoundException if the user is not a member of the group.
+     * Throws a [ResourceNotFoundException] if the user is not a member of the group.
      *
-     * @param userId The UUID of the user to check.
-     * @param groupId The UUID of the group to check.
+     * @param userId The [UUID] of the user to check.
+     * @param groupId The [UUID] of the group to check.
      * @param errorMessage The error message to include in the exception if the user is not a member of the group.
-     * @return The UserGroupEntity representing the user's membership in the group.
+     * @return The [UserGroupEntity] representing the user's membership in the group.
      * @throws ResourceNotFoundException if the user is not a member of the group.
      */
     private fun getUserMembershipOrThrow(
