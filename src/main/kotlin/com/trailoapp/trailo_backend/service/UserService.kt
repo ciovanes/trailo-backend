@@ -1,6 +1,7 @@
 package com.trailoapp.trailo_backend.service
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
+import com.trailoapp.trailo_backend.dto.user.request.CreateUserDto
 import com.trailoapp.trailo_backend.dto.user.request.UpdateUserRequest
 import com.trailoapp.trailo_backend.repository.UserRepository
 import jakarta.transaction.Transactional
@@ -19,23 +20,23 @@ class UserService(private val userRepository: UserRepository, private val cognit
     }
 
     @Transactional
-    fun createUser(email: String, username: String, name: String?, surname: String?, profileImageUrl: String?, country: String?, cognitoId: String): UserEntity {
-        if (userRepository.existsByEmail(email)) {
-            throw IllegalArgumentException("Email already exists: $email")
+    fun createUser(user: CreateUserDto): UserEntity {
+        if (userRepository.existsByEmail(user.email)) {
+            throw IllegalArgumentException("Email already exists: $user.email")
         }
 
-        if (userRepository.existsByUsername(username)) {
-            throw IllegalArgumentException("Username already exists: $username")
+        if (userRepository.existsByUsername(user.username)) {
+            throw IllegalArgumentException("Username already exists: $user.username")
         }
 
         val userEntity = UserEntity(
-            email = email,
-            username = username,
-            name = name,
-            surname = surname,
-            profileImageUrl = profileImageUrl,
-            country = country,
-            cognitoId = cognitoId
+            email = user.email,
+            username = user.username,
+            name = user.name,
+            surname = user.surname,
+            profileImageUrl = user.profileImageUrl,
+            country = user.country,
+            cognitoId = user.cognitoId
         )
 
         return userRepository.save(userEntity)
