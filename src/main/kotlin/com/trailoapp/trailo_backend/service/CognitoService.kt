@@ -14,7 +14,6 @@ import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-
 @Service
 class CognitoService(
     private val cognitoClient: CognitoIdentityProviderClient,
@@ -29,36 +28,14 @@ class CognitoService(
     @Value("\${aws.cognito.clientSecret}")
     private lateinit var clientSecret: String
 
-    /*
-    * Register a new user with Cognito
-    */
     fun registerUser(email: String, password: String, username: String, name: String?): String {
         // Create user attributes
-        val userAttributes = mutableListOf<AttributeType>()
-
-        userAttributes.add(AttributeType.builder()
-            .name("email")
-            .value(email)
-            .build()
-        )
-
-        userAttributes.add(AttributeType.builder()
-            .name("nickname")
-            .value(username)
-            .build()
-        )
-
-        name?.let {
-            userAttributes.add(AttributeType.builder()
-                .name("name")
-                .value(it)
-                .build())
-        }
+        val userAttributes = buildUserAttributes(email, username, name)
 
         // Calculate secret hash
         val secretHash = calculateSecretHash(username)
 
-        // Create register request
+        // Create and execute signup request
         val signupRequest = SignUpRequest.builder()
             .clientId(clientId)
             .username(username)
@@ -67,14 +44,13 @@ class CognitoService(
             .secretHash(secretHash)
             .build()
 
-        // Execute the request
         val response = cognitoClient.signUp(signupRequest)
 
         confirmUserSignUp(username)
         return response.userSub()
     }
 
-    /*
+    /**
     * Confirm the user's signup
     */
     fun confirmUserSignUp(username: String) {
@@ -86,8 +62,8 @@ class CognitoService(
         cognitoClient.adminConfirmSignUp(request)
     }
 
-    /*
-    * Log in a user with Cognito
+    /**
+    * Log in a user with Cognito.
     */
     fun loginUser(username: String, password: String): AuthenticationResultType {
         val authParams = buildMap {
@@ -107,8 +83,8 @@ class CognitoService(
         return response.authenticationResult()
     }
 
-    /*
-    Delete user
+    /**
+     * Delete a user from Cognito.
      */
     fun deleteUser(username: String) {
         val deleteUserRequest = AdminDeleteUserRequest.builder()
@@ -119,6 +95,38 @@ class CognitoService(
         cognitoClient.adminDeleteUser(deleteUserRequest)
     }
 
+
+    // ===== UTILITY METHODS =====
+
+    /**
+     * Builds the list of attributes for registration.
+     */
+    private fun buildUserAttributes(email: String, username: String, name: String?): List<AttributeType> {
+        return buildList {
+            add(AttributeType.builder()
+                .name("email")
+                .value(email)
+                .build()
+            )
+
+            add(AttributeType.builder()
+                .name("nickname")
+                .value(username)
+                .build()
+            )
+
+            name?.let {
+                add(AttributeType.builder()
+                    .name("name")
+                    .value(it)
+                    .build())
+            }
+        }
+    }
+
+    /**
+     * Calculates the secret hash for Cognito requests.
+     */
     private fun calculateSecretHash(username: String): String {
         val message = username + clientId
         val signinKey = SecretKeySpec(clientSecret.toByteArray(Charsets.UTF_8), "HmacSHA256")
