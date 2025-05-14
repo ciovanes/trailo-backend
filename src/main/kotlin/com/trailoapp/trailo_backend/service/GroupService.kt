@@ -266,6 +266,11 @@ class GroupService(
             throw BusinessRuleException("The membership status cannot be changed")
         }
 
+        if (newStatus == MembershipStatus.REJECTED) {
+            userGroupRepository.delete(userGroup)
+            return
+        }
+
         userGroup.status = newStatus
         userGroupRepository.save(userGroup)
     }

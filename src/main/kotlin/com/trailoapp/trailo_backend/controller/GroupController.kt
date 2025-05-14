@@ -48,11 +48,11 @@ class GroupController(
             .body(GroupResponse.fromEntity(group))
     }
 
-    @GetMapping("/id/{uuid}")
+    @GetMapping("/{groupId}")
     fun getGroup(
-        @PathVariable uuid: UUID
+        @PathVariable groupId: UUID
     ): ResponseEntity<GroupResponse> {
-        val group = groupService.findGroupByUuid(uuid)
+        val group = groupService.findGroupByUuid(groupId)
             ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
 
         return ResponseEntity
@@ -202,7 +202,7 @@ class GroupController(
     ): ResponseEntity<Unit> {
         groupService.leaveGroup(user.uuid, groupId)
 
-        return ResponseEntity.status(HttpStatus.OK).build()
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
     @PostMapping("/{groupId}/favorite")
@@ -245,7 +245,7 @@ class GroupController(
     ): ResponseEntity<Unit> {
         groupService.kickMember(user.uuid, groupId, memberId)
 
-        return ResponseEntity.status(HttpStatus.OK).build()
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
     @PatchMapping("/{groupId}/members/{memberId}/role")
@@ -285,7 +285,7 @@ class GroupController(
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
-    @PostMapping("/{groupId}/requests/{userId}/accept")
+    @PatchMapping("/{groupId}/requests/{userId}/accept")
     fun acceptMemberRequest(
         @PathVariable groupId: UUID,
         @PathVariable userId: UUID,
@@ -296,7 +296,7 @@ class GroupController(
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
-    @PostMapping("/{groupId}/requests/{userId}/reject")
+    @DeleteMapping("/{groupId}/requests/{userId}/reject")
     fun rejectMemberRequest(
         @PathVariable groupId: UUID,
         @PathVariable userId: UUID,
