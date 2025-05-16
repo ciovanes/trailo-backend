@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.jpa.repository.cdi.JpaRepositoryExtension
 import org.springframework.stereotype.Repository
 import java.util.Optional
 import java.util.UUID
@@ -22,11 +21,6 @@ interface FriendshipRepository : JpaRepository<FriendshipEntity, UUID> {
             """
     )
     fun findFriendshipsByUserIdAndStatus(userId: UUID, status: FriendshipStatus, pageable: Pageable): Page<FriendshipEntity>
-
-    fun findByUser_UuidAndStatus(userId: UUID, status: FriendshipStatus, pageable: Pageable): Page<FriendshipEntity>
-    fun findByFriend_UuidAndStatus(friendId: UUID, status: FriendshipStatus, pageable: Pageable): Page<FriendshipEntity>
-    fun existsByUser_UuidAndFriend_Uuid(userId: UUID, friendId: UUID): Boolean
-    fun findByUser_UuidAndFriend_Uuid(userId: UUID, friendId: UUID): Optional<FriendshipEntity>
 
     @Query(value =
         """
