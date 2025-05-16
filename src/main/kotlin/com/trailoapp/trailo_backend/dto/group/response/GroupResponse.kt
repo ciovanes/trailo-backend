@@ -1,6 +1,6 @@
 package com.trailoapp.trailo_backend.dto.group.response
 
-import com.trailoapp.trailo_backend.domain.social.GroupEntity
+import com.trailoapp.trailo_backend.domain.core.GroupEntity
 import java.util.UUID
 
 data class GroupResponse(

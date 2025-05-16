@@ -1,7 +1,7 @@
 package com.trailoapp.trailo_backend.repository
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
-import com.trailoapp.trailo_backend.domain.social.GroupEntity
+import com.trailoapp.trailo_backend.domain.core.GroupEntity
 import com.trailoapp.trailo_backend.domain.social.UserGroupEntity
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
