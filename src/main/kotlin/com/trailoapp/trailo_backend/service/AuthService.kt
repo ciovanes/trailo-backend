@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import jakarta.transaction.Transactional
 import com.trailoapp.trailo_backend.dto.auth.request.RegisterUserRequest
 import com.trailoapp.trailo_backend.dto.auth.response.AuthResponse
+import com.trailoapp.trailo_backend.dto.user.request.CreateUserDto
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import java.time.OffsetDateTime
 
@@ -16,9 +17,15 @@ class AuthService(
     private val cognitoService: CognitoService
 ) {
 
+    /**
+     * Registers a new user in both Cognito and local database.
+     *
+     * @param request Registration data for the new user.
+     * @return The created user.
+     */
     @Transactional
     fun registerUser(request: RegisterUserRequest): UserEntity {
-        // Register a user with Cognito
+        // Register with Cognito and get the ID
         val cognitoUserId = cognitoService.registerUser(
             email = request.email,
             password = request.password,
@@ -26,30 +33,35 @@ class AuthService(
             name = request.name
         )
 
+        // Create the local user
         return userService.createUser(
-            email = request.email,
-            username = request.username,
-            name = request.name,
-            surname = request.surname,
-            profileImageUrl = request.profileImageUrl,
-            country = request.country,
-            cognitoId = cognitoUserId
+            CreateUserDto(
+                email = request.email,
+                username = request.username,
+                name = request.name,
+                surname = request.surname,
+                profileImageUrl = request.profileImageUrl,
+                country = request.country,
+                cognitoId = cognitoUserId
+            )
         )
     }
 
+    /**
+     * Authenticates a user using username/email and password.
+     *
+     * @param request Login request credentials.
+     * @return Authentication response with tokens and user info.
+     */
     fun loginUser(request: LoginUserRequest): AuthResponse {
         val authResult = cognitoService.loginUser(request.username, request.password)
 
-        val user = if (request.username.contains("@")) {
-            userService.findUserByEmail(request.username)
-        } else {
-            userService.findUserByUsername(request.username)
-        }
+        val user = findUserByIdentifier(request.username)
 
         // Update last login date
-        user?.let {
-            it.lastLoginAt = OffsetDateTime.now()
-            userService.saveUser(it)
+        user?.apply {
+            lastLoginAt = OffsetDateTime.now()
+            userService.saveUser(this)
         }
 
         return AuthResponse(
@@ -60,5 +72,21 @@ class AuthService(
             tokenType = authResult.tokenType(),
             user = user?.let { UserResponse.fromUser(it) }
         )
+    }
+
+    // ===== UTILITY METHODS ======
+
+    /**
+     * Finds a user by email or a username.
+     *
+     * @param identifier The user's identifier.
+     * @return The found [UserEntity], or null.
+     */
+    private fun findUserByIdentifier(identifier: String): UserEntity? {
+        return if (identifier.contains("@")) {
+            userService.findUserByEmail(identifier)
+        } else {
+            userService.findUserByUsername(identifier)
+        }
     }
 }

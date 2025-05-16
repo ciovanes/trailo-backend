@@ -1,6 +1,5 @@
 package com.trailoapp.trailo_backend.domain.social
 
-import com.trailoapp.trailo_backend.config.FriendshipStatusConverter
 import com.trailoapp.trailo_backend.domain.core.UserEntity
 import com.trailoapp.trailo_backend.domain.enum.FriendshipStatus
 import jakarta.persistence.*

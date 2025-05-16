@@ -2,12 +2,13 @@ package com.trailoapp.trailo_backend.service
 
 import com.trailoapp.trailo_backend.domain.enum.FriendshipStatus
 import com.trailoapp.trailo_backend.domain.social.FriendshipEntity
+import com.trailoapp.trailo_backend.exception.definitions.BusinessRuleException
+import com.trailoapp.trailo_backend.exception.definitions.PermissionDeniedException
+import com.trailoapp.trailo_backend.exception.definitions.ResourceNotFoundException
 import com.trailoapp.trailo_backend.repository.FriendshipRepository
 import jakarta.transaction.Transactional
-import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -17,68 +18,75 @@ class FriendshipService (
     private val userService: UserService
 ){
 
-    private val logger = LoggerFactory.getLogger(this.javaClass)
+    /**
+     * Get all accepted friendships for a user.
+     */
+    fun getFriends(userId: UUID, pageable: Pageable): Page<FriendshipEntity> {
+        return friendshipRepository.findFriendshipsByUserIdAndStatus(userId, FriendshipStatus.ACCEPTED, pageable)
+    }
 
-    /*
-    Send a friend request to a user
+    /**
+     * Sends a friend request to another user.
      */
     @Transactional
     fun sendFriendRequest(senderId: UUID, receiverId: UUID): FriendshipEntity {
-
         if (senderId == receiverId) {
-            throw IllegalArgumentException("Cannot send friend request to self")
+            throw BusinessRuleException("Cannot send friend request to self")
         }
 
-        val existingFriendship = friendshipRepository.findByUser_UuidAndFriend_Uuid(senderId, receiverId)
-        if (existingFriendship.isPresent) {
-            val friendship = existingFriendship.get()
+        val sender = userService.findUserById(senderId)
+            ?: throw ResourceNotFoundException("Sender user", senderId)
 
+        val receiver = userService.findUserById(receiverId)
+            ?: throw ResourceNotFoundException("Receiver user", receiverId)
+
+        // Check if direct friendship exists
+        findExistingFriendship(senderId, receiverId)?.let { friendship ->
             if (friendship.status == FriendshipStatus.REJECTED) {
                 friendship.status = FriendshipStatus.PENDING
                 return friendshipRepository.save(friendship)
             }
 
-            throw IllegalArgumentException("Friendship already exists")
+            throw BusinessRuleException("Friendship already exists")
         }
 
-        val inverseExistingFriendship = friendshipRepository.findByUser_UuidAndFriend_Uuid(receiverId, senderId)
-        if (inverseExistingFriendship.isPresent) {
-            val inverseFriendship = inverseExistingFriendship.get()
-
+        // Check if inverse friendship exists
+        findExistingFriendship(receiverId, senderId)?.let { inverseFriendship ->
             if (inverseFriendship.status == FriendshipStatus.PENDING) {
                 inverseFriendship.status = FriendshipStatus.ACCEPTED
                 return friendshipRepository.save(inverseFriendship)
             }
 
-            throw IllegalArgumentException("Friendship already exists")
+            throw BusinessRuleException("Friendship already exists")
         }
 
-        val user = userService.findUserById(senderId)
-        val friend = userService.findUserById(receiverId)
-            ?: throw IllegalArgumentException("User does not exist: $receiverId")
-
-        // create friendship
-        val friendship = FriendshipEntity(
-            user = user!!,
-            friend = friend,
-            status = FriendshipStatus.PENDING
+        // Create a new friendship
+        return friendshipRepository.save(
+             FriendshipEntity(
+                user = sender,
+                friend = receiver,
+                status = FriendshipStatus.PENDING
+            )
         )
-
-        return friendshipRepository.save(friendship)
     }
 
+    /**
+     * Updated the status of a friendship.
+     */
     @Transactional
     fun updateFriendshipStatus(friendshipId: UUID, userId: UUID, newStatus: FriendshipStatus): FriendshipEntity {
         val friendship = friendshipRepository.findById(friendshipId)
-            .orElseThrow { Exception("Friendship not found") } // TODO: Create ResourceNotFoundException!!
+            .orElseThrow { ResourceNotFoundException("Friendship", friendshipId) }
 
+        // Verify if the user is part of the friendship
         if (friendship.user.uuid != userId && friendship.friend.uuid != userId) {
-            throw AccessDeniedException("You don't hace permission to update this friendship")
+            throw PermissionDeniedException("update", "friendship", friendshipId)
         }
 
+        // Only receiver can accept friendship request
         if (newStatus == FriendshipStatus.ACCEPTED && friendship.status == FriendshipStatus.PENDING) {
             if (userId != friendship.friend.uuid) {
-                throw IllegalStateException("Only reciver can accept this request")
+                throw BusinessRuleException("Only the receiver can accept this request")
             }
         }
 
@@ -86,31 +94,35 @@ class FriendshipService (
         return friendshipRepository.save(friendship)
     }
 
-    fun getFriends(userId: UUID, pageable: Pageable): Page<FriendshipEntity> {
-        return friendshipRepository.findFriendshipsByUserIdAndStatus(userId, FriendshipStatus.ACCEPTED, pageable)
-    }
-
-    fun getPendingRequests(userId: UUID, pageable: Pageable): Page<FriendshipEntity> {
-        return friendshipRepository.findFriendshipsByUserIdAndStatus(userId, FriendshipStatus.PENDING, pageable)
-    }
-
+    /**
+     * Delete a friendship between two users.
+     */
     @Transactional
     fun deleteFriendship(userId: UUID, friendId: UUID) {
         val friendship = friendshipRepository.findFriendshipBetweenUsers(userId, friendId)
-            .orElseThrow { Exception("Friendship not found") }
+            ?: throw ResourceNotFoundException("Friendship")
 
         friendshipRepository.delete(friendship)
     }
 
-    fun areFriends(userId: UUID, friendId: UUID): Boolean {
-        return friendshipRepository.existsByUser_UuidAndFriend_Uuid(userId, friendId) ||
-                friendshipRepository.existsByUser_UuidAndFriend_Uuid(friendId, userId)
+    /**
+     * Get all pending friendships for a user.
+     */
+    fun getPendingRequests(userId: UUID, pageable: Pageable): Page<FriendshipEntity> {
+        return friendshipRepository.findFriendshipsByUserIdAndStatus(userId, FriendshipStatus.PENDING, pageable)
     }
 
+    /**
+     * Finds a friendship between two users.
+     */
     fun findByUsersIds(userId: UUID, friendId: UUID): FriendshipEntity {
-        val friendship = friendshipRepository.findFriendshipBetweenUsers(userId, friendId)
-            .orElseThrow { Exception("Friendship not found") }
+        return findExistingFriendship(userId, friendId)
+            ?: throw ResourceNotFoundException("Friendship")
+    }
 
-        return friendship
+    // ===== UTILITY METHODS =====
+
+    private fun findExistingFriendship(senderId: UUID, receiverId: UUID): FriendshipEntity? {
+        return friendshipRepository.findFriendshipBetweenUsers(senderId, receiverId)
     }
 }
