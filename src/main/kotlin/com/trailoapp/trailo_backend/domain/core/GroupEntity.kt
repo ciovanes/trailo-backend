@@ -1,4 +1,4 @@
-package com.trailoapp.trailo_backend.domain.social
+package com.trailoapp.trailo_backend.domain.core
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 @Entity
-@Table(name = "group", schema = "social")
+@Table(name = "group", schema = "core")
 data class GroupEntity (
     @Id
     @Column(name = "uuid")

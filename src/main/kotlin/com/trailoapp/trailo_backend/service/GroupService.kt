@@ -3,7 +3,7 @@ package com.trailoapp.trailo_backend.service
 import com.trailoapp.trailo_backend.domain.core.UserEntity
 import com.trailoapp.trailo_backend.domain.enum.GroupRoles
 import com.trailoapp.trailo_backend.domain.enum.MembershipStatus
-import com.trailoapp.trailo_backend.domain.social.GroupEntity
+import com.trailoapp.trailo_backend.domain.core.GroupEntity
 import com.trailoapp.trailo_backend.domain.social.UserGroupEntity
 import com.trailoapp.trailo_backend.dto.group.request.CreateGroupRequest
 import com.trailoapp.trailo_backend.dto.group.request.UpdateGroupRequest
