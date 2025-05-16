@@ -29,14 +29,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig (private val userService: UserService){
-
-    @Value("\${aws.cognito.userPoolId}")
-    private lateinit var userPoolId: String
-
-    @Value("\${aws.region}")
-    private lateinit var region: String
-
+class SecurityConfig (
+    @Value("\${aws.cognito.userPoolId}") private val userPoolId: String,
+    @Value("\${aws.region}") private val region: String
+){
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
@@ -44,7 +40,7 @@ class SecurityConfig (private val userService: UserService){
         customJwtAuthConverter: CustomJwtAuthenticationConverter
     ): SecurityFilterChain {
         http
-            .cors { it.configurationSource(corsConfigurationSource()) }
+            .cors { it.configurationSource(corsConfigurationSource) }
             .csrf { it.disable() }
             .sessionManagement { session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
