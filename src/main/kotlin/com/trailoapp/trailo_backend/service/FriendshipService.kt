@@ -100,7 +100,7 @@ class FriendshipService (
     @Transactional
     fun deleteFriendship(userId: UUID, friendId: UUID) {
         val friendship = friendshipRepository.findFriendshipBetweenUsers(userId, friendId)
-            .orElseThrow { ResourceNotFoundException("Friendship") }
+            ?: throw ResourceNotFoundException("Friendship")
 
         friendshipRepository.delete(friendship)
     }
@@ -124,6 +124,5 @@ class FriendshipService (
 
     private fun findExistingFriendship(senderId: UUID, receiverId: UUID): FriendshipEntity? {
         return friendshipRepository.findFriendshipBetweenUsers(senderId, receiverId)
-            .orElse(null)
     }
 }

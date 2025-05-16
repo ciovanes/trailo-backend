@@ -109,15 +109,15 @@ class UserService(private val userRepository: UserRepository, private val cognit
     }
 
     fun findUserByEmail(email: String): UserEntity? {
-        return  userRepository.findByEmail(email).orElse(null)
+        return  userRepository.findByEmail(email)
     }
 
     fun findUserByUsername(username: String): UserEntity? {
-        return userRepository.findByUsername(username).orElse(null)
+        return userRepository.findByUsername(username)
     }
 
     fun findUserByCognitoId(cognitoId: String): UserEntity? {
-        return userRepository.findByCognitoId(cognitoId).orElse(null)
+        return userRepository.findByCognitoId(cognitoId)
     }
 
     fun searchByUsername(query: String, pageable: Pageable): Page<UserEntity> {

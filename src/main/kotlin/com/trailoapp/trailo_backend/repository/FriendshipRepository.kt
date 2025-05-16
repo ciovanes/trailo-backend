@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.util.Optional
 import java.util.UUID
 
 @Repository
@@ -29,5 +28,5 @@ interface FriendshipRepository : JpaRepository<FriendshipEntity, UUID> {
             OR (f.user.uuid = :friendId AND f.friend.uuid = :userId)
         """
     )
-    fun findFriendshipBetweenUsers(userId: UUID, friendId: UUID): Optional<FriendshipEntity>
+    fun findFriendshipBetweenUsers(userId: UUID, friendId: UUID): FriendshipEntity?
 }

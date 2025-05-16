@@ -158,7 +158,7 @@ class GroupService(
         val group = getGroupByUuid(groupId)
 
         userGroupRepository.findByGroup_UuidAndUser_Uuid(group.uuid, user.uuid)
-            .ifPresent { throw BusinessRuleException("User is already a member of this group") }
+            ?.let{ throw BusinessRuleException("User is already a member of this group") }
 
         return userGroupRepository.save(
             UserGroupEntity(
@@ -389,6 +389,6 @@ class GroupService(
         errorMessage: String = "User-group relationship not found"
     ): UserGroupEntity {
         return userGroupRepository.findByGroup_UuidAndUser_Uuid(groupId, userId)
-            .orElseThrow { ResourceNotFoundException(errorMessage, "$userId, $groupId") }
+            ?: throw ResourceNotFoundException(errorMessage, "$userId, $groupId")
     }
 }

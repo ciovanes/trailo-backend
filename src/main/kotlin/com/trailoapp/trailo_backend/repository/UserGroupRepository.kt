@@ -8,7 +8,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import java.util.Optional
 import java.util.UUID
 
 @Repository
@@ -26,7 +25,7 @@ interface UserGroupRepository: JpaRepository<UserGroupEntity, UUID> {
     )
     fun userHavePermissions(userId: UUID, groupId: UUID): Boolean
 
-    fun findByGroup_UuidAndUser_Uuid(groupId: UUID, userId: UUID): Optional<UserGroupEntity>
+    fun findByGroup_UuidAndUser_Uuid(groupId: UUID, userId: UUID): UserGroupEntity?
 
     @Query(value =
     """
