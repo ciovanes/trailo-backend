@@ -2,9 +2,11 @@ package com.trailoapp.trailo_backend.controller
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
+import com.trailoapp.trailo_backend.dto.meetup.response.MeetupResponse
 import com.trailoapp.trailo_backend.dto.user.request.UpdateUserRequest
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.exception.definitions.ResourceNotFoundException
+import com.trailoapp.trailo_backend.service.MeetupService
 import com.trailoapp.trailo_backend.service.UserService
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
@@ -18,7 +20,8 @@ import java.util.UUID
 @RestController
 @RequestMapping("/api/v1/users")
 class UserController(
-    private val userService: UserService
+    private val userService: UserService,
+    private val meetupService: MeetupService
 ) {
 
     // ===== USER MANAGEMENT =====
@@ -118,5 +121,27 @@ class UserController(
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(UserResponse.fromUser(user))
+    }
+
+    // ===== MEETUPS =====
+    @GetMapping("/{userId}/meetups")
+    fun getUserMeetups(
+        @PathVariable userId: UUID,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "20") size: Int,
+    ): ResponseEntity<PageResponse<MeetupResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "meetingTime"))
+        val meetups = meetupService.getUserMeetups(userId, pageable)
+
+        val response = PageResponse(
+            content = meetups.content.map { MeetupResponse.fromEntity(it) },
+            pageNumber = page,
+            pageSize = size,
+            totalElements = meetups.totalElements,
+            totalPages = meetups.totalPages,
+            isLast = meetups.isLast
+        )
+
+        return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 }

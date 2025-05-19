@@ -157,7 +157,7 @@ class GroupService(
     fun joinGroup(user: UserEntity, groupId: UUID): UserGroupEntity {
         val group = getGroupByUuid(groupId)
 
-        userGroupRepository.findByGroup_UuidAndUser_Uuid(group.uuid, user.uuid)
+        userGroupRepository.findByGroup_UuidAndUser_UuidAccepted(group.uuid, user.uuid)
             ?.let{ throw BusinessRuleException("User is already a member of this group") }
 
         return userGroupRepository.save(
@@ -356,7 +356,7 @@ class GroupService(
      * @return The [GroupEntity] with the specified UUID.
      * @throws ResourceNotFoundException if the group is not found.
      */
-    private fun getGroupByUuid(uuid: UUID): GroupEntity {
+    fun getGroupByUuid(uuid: UUID): GroupEntity {
         return groupRepository.findById(uuid)
             .orElseThrow { ResourceNotFoundException("Group", uuid) }
     }
@@ -383,7 +383,7 @@ class GroupService(
      * @return The [UserGroupEntity] representing the user's membership in the group.
      * @throws ResourceNotFoundException if the user is not a member of the group.
      */
-    private fun getUserMembershipOrThrow(
+    fun getUserMembershipOrThrow(
         userId: UUID,
         groupId: UUID,
         errorMessage: String = "User-group relationship not found"

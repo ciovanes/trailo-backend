@@ -41,6 +41,9 @@ dependencies {
 
     // JWT
     implementation("com.auth0:java-jwt:4.4.0")
+
+    implementation("org.hibernate:hibernate-spatial:6.6.15.Final")
+    implementation("org.locationtech.jts:jts-core:1.19.0")
 }
 
 kotlin {
