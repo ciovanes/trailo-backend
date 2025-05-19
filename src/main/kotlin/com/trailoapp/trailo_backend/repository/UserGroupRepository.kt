@@ -25,6 +25,17 @@ interface UserGroupRepository: JpaRepository<UserGroupEntity, UUID> {
     )
     fun userHavePermissions(userId: UUID, groupId: UUID): Boolean
 
+    @Query(value =
+        """
+            SELECT g FROM UserGroupEntity g
+            JOIN g.user u
+            WHERE g.group.uuid = :groupId
+            AND u.uuid = :userId
+            AND g.status = 'ACCEPTED'
+        """
+    )
+    fun findByGroup_UuidAndUser_UuidAccepted(groupId: UUID, userId: UUID): UserGroupEntity?
+
     fun findByGroup_UuidAndUser_Uuid(groupId: UUID, userId: UUID): UserGroupEntity?
 
     @Query(value =
