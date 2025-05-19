@@ -1,5 +1,6 @@
 package com.trailoapp.trailo_backend.config
 
+import com.trailoapp.trailo_backend.repository.MeetupRepository
 import com.trailoapp.trailo_backend.repository.UserRepository
 import com.trailoapp.trailo_backend.service.UserService
 import org.springframework.beans.factory.annotation.Value
@@ -37,7 +38,7 @@ class SecurityConfig (
     fun securityFilterChain(
         http: HttpSecurity,
         corsConfigurationSource: CorsConfigurationSource,
-        customJwtAuthConverter: CustomJwtAuthenticationConverter
+        customJwtAuthConverter: CustomJwtAuthenticationConverter, meetupRepository: MeetupRepository
     ): SecurityFilterChain {
         http
             .cors { it.configurationSource(corsConfigurationSource) }
@@ -68,6 +69,12 @@ class SecurityConfig (
                 requests.requestMatchers(HttpMethod.POST, "/api/v1/groups/**").authenticated()
                 requests.requestMatchers(HttpMethod.PATCH, "/api/v1/groups/**").authenticated()
                 requests.requestMatchers(HttpMethod.DELETE, "/api/v1/groups/**").authenticated()
+
+                // meetup
+                requests.requestMatchers(HttpMethod.GET, "/api/v1/meetups/**").permitAll()
+                requests.requestMatchers(HttpMethod.POST, "/api/v1/meetups/**").authenticated()
+                requests.requestMatchers(HttpMethod.PATCH, "/api/v1/meetups/**").authenticated()
+                requests.requestMatchers(HttpMethod.DELETE, "/api/v1/meetups/**").authenticated()
             }
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->
