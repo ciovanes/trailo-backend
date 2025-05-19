@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import com.trailoapp.trailo_backend.domain.core.UserEntity
+import com.trailoapp.trailo_backend.domain.enum.MeetupStatus
 import com.trailoapp.trailo_backend.domain.enum.MembershipStatus
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.dto.group.request.CreateGroupRequest
@@ -25,13 +26,17 @@ import com.trailoapp.trailo_backend.dto.group.request.UpdateRoleRequest
 import com.trailoapp.trailo_backend.dto.group.response.GroupMemberResponse
 import com.trailoapp.trailo_backend.dto.group.response.GroupResponse
 import com.trailoapp.trailo_backend.dto.group.response.UserGroupResponse
+import com.trailoapp.trailo_backend.dto.meetup.response.MeetupResponse
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.service.GroupService
+import com.trailoapp.trailo_backend.service.MeetupService
+import org.springframework.data.domain.Page
 
 @RestController
 @RequestMapping("/api/v1/groups")
 class GroupController(
-    private val groupService: GroupService
+    private val groupService: GroupService,
+    private val meetupService: MeetupService
 ) {
 
     // ===== BASIC GROUP OPERATIONS =====
@@ -305,6 +310,32 @@ class GroupController(
         groupService.updateMembershipRequest(user.uuid, groupId, userId, MembershipStatus.REJECTED)
 
         return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+
+    // ===== MEETUPS =====
+    @GetMapping("/{groupId}/meetups")
+    fun getGroupMeetups(
+        @PathVariable groupId: UUID,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @RequestParam(required = false, defaultValue = "WAITING") status: MeetupStatus,
+        @AuthenticationPrincipal user: UserEntity
+    ): ResponseEntity<PageResponse<MeetupResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "meetingTime"))
+
+        val meetups = meetupService.findGroupMeetups(user.uuid, groupId, status, pageable)
+
+        val response = PageResponse(
+            content = meetups.content.map { MeetupResponse.fromEntity(it) },
+            pageNumber = page,
+            pageSize = size,
+            totalElements = meetups.totalElements,
+            totalPages = meetups.totalPages,
+            isLast = meetups.isLast
+        )
+
+        return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
 }
