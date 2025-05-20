@@ -32,29 +32,30 @@ class MeetupController(
     private val userMeetupService: UserMeetupService
 ) {
 
+    // ===== BASIC MEETUP OPERATIONS =====
 
     @PostMapping("/create")
-   fun createMeetup(
+    fun createMeetup(
        @RequestBody request: CreateMeetupRequest,
        @AuthenticationPrincipal user: UserEntity
-   ): ResponseEntity<MeetupResponse> {
+    ): ResponseEntity<MeetupResponse> {
        val meetup = meetupService.createMeetup(user.uuid, request)
 
        return ResponseEntity
            .status(HttpStatus.CREATED)
            .body(MeetupResponse.fromEntity(meetup))
-   }
+    }
 
-    @DeleteMapping("/{meetupId}")
-    fun deleteMeetup(
-        @PathVariable meetupId: UUID,
-        @AuthenticationPrincipal user: UserEntity
-    ): ResponseEntity<Unit> {
-        meetupService.deleteMeetup(meetupId, user.uuid)
+    @GetMapping("/{meetupId}")
+    fun getMeetup(
+        @PathVariable meetupId: UUID
+    ): ResponseEntity<MeetupResponse> {
+        val meetup = meetupService.findMeetupByUuid(meetupId)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
 
         return ResponseEntity
-            .status(HttpStatus.NO_CONTENT)
-            .build()
+            .status(HttpStatus.OK)
+            .body(MeetupResponse.fromEntity(meetup))
     }
 
     @PatchMapping("/{meetupId}")
@@ -70,16 +71,47 @@ class MeetupController(
             .body(MeetupResponse.fromEntity(group))
     }
 
-    @GetMapping("/{meetupId}")
-    fun getMeetup(
-        @PathVariable meetupId: UUID
-    ): ResponseEntity<MeetupResponse> {
-        val meetup = meetupService.findMeetupByUuid(meetupId)
-            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+    @DeleteMapping("/{meetupId}")
+    fun deleteMeetup(
+        @PathVariable meetupId: UUID,
+        @AuthenticationPrincipal user: UserEntity
+    ): ResponseEntity<Unit> {
+        meetupService.deleteMeetup(meetupId, user.uuid)
 
         return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(MeetupResponse.fromEntity(meetup))
+            .status(HttpStatus.NO_CONTENT)
+            .build()
+    }
+
+    // ===== SEARCH AND LISTING =====
+
+    @GetMapping("/search")
+    fun searchMeetups(
+        @RequestParam(required = false, defaultValue = "") query: String,
+        @RequestParam(required = false, defaultValue = "0") page: Int,
+        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @RequestParam(required = false, defaultValue = "title") searchBy: String
+    ): ResponseEntity<PageResponse<MeetupResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "meetingTime"))
+
+        val meetupPage = when (searchBy.lowercase()) {
+            "title" -> meetupService.searchByTitle(query, pageable)
+            "difficulty" -> meetupService.searchByDifficulty(query, pageable)
+            "distance" -> meetupService.searchByDistance(query.toBigDecimalOrNull(), pageable)
+            "terrain" -> meetupService.searchByTerrainType(query, pageable)
+            else -> meetupService.searchByTitle(query, pageable)
+        }
+
+        val response = PageResponse(
+            content = meetupPage.content.map { MeetupResponse.fromEntity(it) },
+            pageNumber = page,
+            pageSize = size,
+            totalElements = meetupPage.totalElements,
+            totalPages = meetupPage.totalPages,
+            isLast = meetupPage.isLast
+        )
+
+        return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
     @GetMapping("/discover")
@@ -101,6 +133,37 @@ class MeetupController(
 
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
+
+    @GetMapping("/nearby")
+    fun getNearbyMeetups(
+        @RequestParam latitude: Double,
+        @RequestParam longitude: Double,
+        @RequestParam(defaultValue = "10.0") radiusInKm: Double,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<PageResponse<MeetupResponse>> {
+        val pageable = PageRequest.of(page, size)
+
+        val meetups = meetupService.findNearbyMeetups(
+            latitude = latitude,
+            longitude = longitude,
+            radiusInKm = radiusInKm,
+            pageable = pageable
+        )
+
+        val response = PageResponse(
+            content = meetups.content.map { MeetupResponse.fromEntity(it) },
+            pageNumber = page,
+            pageSize = size,
+            totalElements = meetups.totalElements,
+            totalPages = meetups.totalPages,
+            isLast = meetups.isLast
+        )
+
+        return ResponseEntity.status(HttpStatus.OK).body(response)
+    }
+
+    // ===== MEETUP ACTIONS =====
 
     @PostMapping("{meetupId}/join")
     fun joinMeetup(
@@ -144,63 +207,4 @@ class MeetupController(
 
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
-
-    @GetMapping("/search")
-    fun searchMeetups(
-        @RequestParam(required = false, defaultValue = "") query: String,
-        @RequestParam(required = false, defaultValue = "0") page: Int,
-        @RequestParam(required = false, defaultValue = "20") size: Int,
-        @RequestParam(required = false, defaultValue = "title") searchBy: String
-    ): ResponseEntity<PageResponse<MeetupResponse>> {
-        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "meetingTime"))
-
-        val meetupPage = when (searchBy.lowercase()) {
-            "title" -> meetupService.searchByTitle(query, pageable)
-            "difficulty" -> meetupService.searchByDifficulty(query, pageable)
-            "distance" -> meetupService.searchByDistance(query.toBigDecimalOrNull(), pageable)
-            "terrain" -> meetupService.searchByTerrainType(query, pageable)
-            else -> meetupService.searchByTitle(query, pageable)
-        }
-
-        val response = PageResponse(
-            content = meetupPage.content.map { MeetupResponse.fromEntity(it) },
-            pageNumber = page,
-            pageSize = size,
-            totalElements = meetupPage.totalElements,
-            totalPages = meetupPage.totalPages,
-            isLast = meetupPage.isLast
-        )
-
-        return ResponseEntity.status(HttpStatus.OK).body(response)
-    }
-
-    @GetMapping("/nearby")
-    fun getNearbyMeetups(
-        @RequestParam latitude: Double,
-        @RequestParam longitude: Double,
-        @RequestParam(defaultValue = "10.0") radiusInKm: Double,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
-    ): ResponseEntity<PageResponse<MeetupResponse>> {
-        val pageable = PageRequest.of(page, size)
-
-        val meetups = meetupService.findNearbyMeetups(
-            latitude = latitude,
-            longitude = longitude,
-            radiusInKm = radiusInKm,
-            pageable = pageable
-        )
-
-        val response = PageResponse(
-            content = meetups.content.map { MeetupResponse.fromEntity(it) },
-            pageNumber = page,
-            pageSize = size,
-            totalElements = meetups.totalElements,
-            totalPages = meetups.totalPages,
-            isLast = meetups.isLast
-        )
-
-        return ResponseEntity.status(HttpStatus.OK).body(response)
-    }
-
 }

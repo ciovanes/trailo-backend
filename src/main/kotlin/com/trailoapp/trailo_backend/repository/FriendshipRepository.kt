@@ -1,6 +1,6 @@
 package com.trailoapp.trailo_backend.repository
 
-import com.trailoapp.trailo_backend.domain.enum.FriendshipStatus
+import com.trailoapp.trailo_backend.domain.enum.social.FriendshipStatus
 import com.trailoapp.trailo_backend.domain.social.FriendshipEntity
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable

@@ -18,13 +18,19 @@ class UserMeetupService(
     private val userMeetupRepository: UserMeetupRepository,
 ) {
 
+    /**
+     * Join a meetup.
+     *
+     * @param userId the UUID of the user who wants to join the meetup.
+     * @param meetupId the UUID of the meetup to join.
+     * @return the created [UserMeetupEntity].
+     */
     @Transactional
     fun joinMeetup(userId: UUID, meetupId: UUID): UserMeetupEntity {
         val user = userService.findUserById(userId)
             ?: throw ResourceNotFoundException("user", userId)
 
-        val meetup = meetupService.findMeetupByUuid(meetupId)
-            ?: throw ResourceNotFoundException("meetup", meetupId)
+        val meetup = meetupService.getMeetupOrThrow(meetupId)
 
         val group = groupService.getGroupByUuid(meetup.group)
 
@@ -44,16 +50,20 @@ class UserMeetupService(
         )
     }
 
+    /**
+     * Leave a meetup.
+     *
+     * @param userId the UUID of the user who wants to leave the meetup.
+     * @param meetupId the UUID of the meetup to leave.
+     */
     @Transactional
     fun leaveMeetup(userId: UUID, meetupId: UUID) {
         val user = userService.findUserById(userId)
             ?: throw ResourceNotFoundException("user", userId)
 
-        val meetup = meetupService.findMeetupByUuid(meetupId)
-            ?: throw ResourceNotFoundException("meetup", meetupId)
+        val meetup = meetupService.getMeetupOrThrow(meetupId)
 
-        val userMeetup = userMeetupRepository.findByUserUuidAndMeetupUuid(user.uuid, meetup.uuid)
-            ?: throw ResourceNotFoundException("user meetup", "${user.uuid} - ${meetup.uuid}")
+        val userMeetup = meetupService.getUserMeetupOrThrow(user.uuid, meetup.uuid)
 
         userMeetupRepository.delete(userMeetup)
     }

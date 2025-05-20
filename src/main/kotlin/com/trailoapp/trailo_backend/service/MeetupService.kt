@@ -1,9 +1,9 @@
 package com.trailoapp.trailo_backend.service
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
-import com.trailoapp.trailo_backend.domain.enum.MeetupStatus
-import com.trailoapp.trailo_backend.domain.enum.TerrainType
-import com.trailoapp.trailo_backend.domain.enum.TrailDifficulty
+import com.trailoapp.trailo_backend.domain.enum.geo.MeetupStatus
+import com.trailoapp.trailo_backend.domain.enum.geo.TerrainType
+import com.trailoapp.trailo_backend.domain.enum.geo.TrailDifficulty
 import com.trailoapp.trailo_backend.domain.geo.MeetupEntity
 import com.trailoapp.trailo_backend.domain.geo.MeetupTerrainTypeEntity
 import com.trailoapp.trailo_backend.domain.social.UserMeetupEntity
@@ -34,6 +34,15 @@ class MeetupService(
     private val userMeetupRepository: UserMeetupRepository
 ) {
 
+    // ===== MEETUP MANAGEMENT =====
+
+    /**
+     * Create a new meetup.
+     *
+     * @param userId the UUID of the user who create the meetup.
+     * @param request the [CreateMeetupRequest] containing the details of the new meetup.
+     * @return the created [MeetupEntity].
+     */
     @Transactional
     fun createMeetup(userId: UUID, request: CreateMeetupRequest): MeetupEntity {
         val group = groupService.getGroupByUuid(request.group)
@@ -84,10 +93,15 @@ class MeetupService(
         return meetup
     }
 
+    /**
+     * Delete a meetup.
+     *
+     * @param meetupId the UUID of the meetup to delete.
+     * @param userId the UUID of the user who wants to delete the meetup (needs to be the host of the meetup).
+     */
     @Transactional
     fun deleteMeetup(meetupId: UUID, userId: UUID) {
-        val meetup = meetupRepository.findById(meetupId)
-            .orElseThrow { throw ResourceNotFoundException("meetup", meetupId) }
+        val meetup = getMeetupOrThrow(meetupId)
 
         if (meetup.host != userId) {
             throw PermissionDeniedException("delete meetup", "meetup", meetupId )
@@ -96,10 +110,17 @@ class MeetupService(
         meetupRepository.delete(meetup)
     }
 
+    /**
+     * Update a meetup.
+     *
+     * @param meetupId the UUID of the meetup to update.
+     * @param userId the UUID of the user who wants to update the meetup (needs to be the host of the meetup).
+     * @param request the [UpdateMeetupRequest] containing the updated fields for the meetup.
+     * @return the updated [MeetupEntity].
+     */
     @Transactional
     fun updateMeetup(meetupId: UUID, userId: UUID, request: UpdateMeetupRequest): MeetupEntity {
-        val meetup = meetupRepository.findById(meetupId)
-            .orElseThrow { throw ResourceNotFoundException("meetup", meetupId) }
+        val meetup = getMeetupOrThrow(meetupId)
 
         if (meetup.host != userId) {
             throw PermissionDeniedException("update meetup", "meetup", meetupId)
@@ -145,15 +166,18 @@ class MeetupService(
         return meetupRepository.save(meetup)
     }
 
-    fun findMeetupByUuid(meetupId: UUID): MeetupEntity? {
-        return meetupRepository.findByIdOrNull(meetupId)
-    }
+    // ===== SEARCH MEETUP METHODS =====
 
     fun getDiscoverMeetups(pageable: Pageable): Page<MeetupEntity> {
         return meetupRepository.findNextMeetups(pageable)
     }
 
-    fun findGroupMeetups(userId: UUID, groupId: UUID, status: MeetupStatus, pageable: Pageable): Page<MeetupEntity> {
+    fun getGroupMeetupsByStatus(
+        userId: UUID,
+        groupId: UUID,
+        status: MeetupStatus,
+        pageable: Pageable
+    ): Page<MeetupEntity> {
         val group = groupService.getGroupByUuid(groupId)
 
         if (group.isPrivate) {
@@ -171,20 +195,20 @@ class MeetupService(
     }
 
     fun getParticipants(userId: UUID, meetupId: UUID, pageable: Pageable): Page<UserEntity> {
-        val meetup = meetupRepository.findById(meetupId)
-            .orElseThrow { throw ResourceNotFoundException("meetup", meetupId) }
+        val meetup = getMeetupOrThrow(meetupId)
 
         val group = groupService.getGroupByUuid(meetup.group)
 
         if (group.isPrivate) {
-            userMeetupRepository.findByUserUuidAndMeetupUuid(userId, meetup.uuid)
-                ?: throw ResourceNotFoundException("user meetup", "$userId - ${meetup.uuid}")
-
+            getUserMeetupOrThrow(userId, meetup.uuid)
         }
 
         return userMeetupRepository.findAllByMeetupUuid(meetup.uuid, pageable)
     }
 
+    fun findMeetupByUuid(meetupId: UUID): MeetupEntity? {
+        return meetupRepository.findByIdOrNull(meetupId)
+    }
 
     fun searchByTitle(query: String, pageable: Pageable): Page<MeetupEntity> {
         return meetupRepository.findByTitleContainingIgnoreCase(query, pageable)
@@ -234,5 +258,15 @@ class MeetupService(
         val longitude= pointDto.coordinates[1]
 
         return geometryFactory.createPoint(Coordinate(longitude, latitude))
+    }
+
+    fun getMeetupOrThrow(meetupId: UUID): MeetupEntity {
+        return meetupRepository.findById(meetupId)
+            .orElseThrow { throw ResourceNotFoundException("meetup", meetupId) }
+    }
+
+    fun getUserMeetupOrThrow(userId: UUID, meetupId: UUID): UserMeetupEntity {
+        return userMeetupRepository.findByUserUuidAndMeetupUuid(userId, meetupId)
+            ?: throw ResourceNotFoundException("user meetup", "$userId - $meetupId")
     }
 }

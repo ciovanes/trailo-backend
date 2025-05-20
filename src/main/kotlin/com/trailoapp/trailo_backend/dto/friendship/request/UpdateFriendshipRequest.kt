@@ -1,6 +1,6 @@
 package com.trailoapp.trailo_backend.dto.friendship.request
 
-import com.trailoapp.trailo_backend.domain.enum.FriendshipStatus
+import com.trailoapp.trailo_backend.domain.enum.social.FriendshipStatus
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 

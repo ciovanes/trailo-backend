@@ -1,7 +1,7 @@
 package com.trailoapp.trailo_backend.domain.social
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
-import com.trailoapp.trailo_backend.domain.enum.FriendshipStatus
+import com.trailoapp.trailo_backend.domain.enum.social.FriendshipStatus
 import jakarta.persistence.*
 import org.hibernate.annotations.ColumnTransformer
 import org.hibernate.annotations.CreationTimestamp

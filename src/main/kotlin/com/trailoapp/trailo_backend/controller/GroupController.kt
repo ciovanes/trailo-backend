@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import com.trailoapp.trailo_backend.domain.core.UserEntity
-import com.trailoapp.trailo_backend.domain.enum.MeetupStatus
-import com.trailoapp.trailo_backend.domain.enum.MembershipStatus
+import com.trailoapp.trailo_backend.domain.enum.geo.MeetupStatus
+import com.trailoapp.trailo_backend.domain.enum.social.MembershipStatus
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.dto.group.request.CreateGroupRequest
 import com.trailoapp.trailo_backend.dto.group.request.UpdateGroupRequest
@@ -188,7 +188,7 @@ class GroupController(
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
-    @PostMapping("/join/{groupId}")
+    @PostMapping("/{groupId}/join")
     fun joinGroup(
         @PathVariable groupId: UUID,
         @AuthenticationPrincipal user: UserEntity
@@ -313,7 +313,8 @@ class GroupController(
     }
 
 
-    // ===== MEETUPS =====
+    // ===== GROUP MEETUPS =====
+
     @GetMapping("/{groupId}/meetups")
     fun getGroupMeetups(
         @PathVariable groupId: UUID,
@@ -324,7 +325,7 @@ class GroupController(
     ): ResponseEntity<PageResponse<MeetupResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "meetingTime"))
 
-        val meetups = meetupService.findGroupMeetups(user.uuid, groupId, status, pageable)
+        val meetups = meetupService.getGroupMeetupsByStatus(user.uuid, groupId, status, pageable)
 
         val response = PageResponse(
             content = meetups.content.map { MeetupResponse.fromEntity(it) },
