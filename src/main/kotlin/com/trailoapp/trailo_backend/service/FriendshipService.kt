@@ -1,6 +1,6 @@
 package com.trailoapp.trailo_backend.service
 
-import com.trailoapp.trailo_backend.domain.enum.FriendshipStatus
+import com.trailoapp.trailo_backend.domain.enum.social.FriendshipStatus
 import com.trailoapp.trailo_backend.domain.social.FriendshipEntity
 import com.trailoapp.trailo_backend.exception.definitions.BusinessRuleException
 import com.trailoapp.trailo_backend.exception.definitions.PermissionDeniedException

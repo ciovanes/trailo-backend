@@ -1,8 +1,8 @@
 package com.trailoapp.trailo_backend.repository
 
-import com.trailoapp.trailo_backend.domain.enum.MeetupStatus
-import com.trailoapp.trailo_backend.domain.enum.TerrainType
-import com.trailoapp.trailo_backend.domain.enum.TrailDifficulty
+import com.trailoapp.trailo_backend.domain.enum.geo.MeetupStatus
+import com.trailoapp.trailo_backend.domain.enum.geo.TerrainType
+import com.trailoapp.trailo_backend.domain.enum.geo.TrailDifficulty
 import com.trailoapp.trailo_backend.domain.geo.MeetupEntity
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -24,7 +24,6 @@ interface MeetupRepository: JpaRepository<MeetupEntity, UUID> {
         """
     )
     fun findNextMeetups(pageable: Pageable): Page<MeetupEntity>
-
 
     @Query(value =
         """

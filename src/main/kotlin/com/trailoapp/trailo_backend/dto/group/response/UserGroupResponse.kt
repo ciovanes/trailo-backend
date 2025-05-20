@@ -1,7 +1,7 @@
 package com.trailoapp.trailo_backend.dto.group.response
 
-import com.trailoapp.trailo_backend.domain.enum.GroupRoles
-import com.trailoapp.trailo_backend.domain.enum.MembershipStatus
+import com.trailoapp.trailo_backend.domain.enum.social.GroupRoles
+import com.trailoapp.trailo_backend.domain.enum.social.MembershipStatus
 import com.trailoapp.trailo_backend.domain.social.UserGroupEntity
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import java.util.UUID

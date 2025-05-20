@@ -1,18 +1,13 @@
 package com.trailoapp.trailo_backend.domain.geo
 
-import com.trailoapp.trailo_backend.domain.core.GroupEntity
-import com.trailoapp.trailo_backend.domain.core.UserEntity
-import com.trailoapp.trailo_backend.domain.enum.MeetupStatus
-import com.trailoapp.trailo_backend.domain.enum.TerrainType
-import com.trailoapp.trailo_backend.domain.enum.TrailDifficulty
+import com.trailoapp.trailo_backend.domain.enum.geo.MeetupStatus
+import com.trailoapp.trailo_backend.domain.enum.geo.TrailDifficulty
 import jakarta.persistence.*
 import org.hibernate.annotations.ColumnTransformer
 import org.hibernate.annotations.CreationTimestamp
 import org.locationtech.jts.geom.Point
 import java.math.BigDecimal
-import java.time.Duration
 import java.time.OffsetDateTime
-import java.time.ZonedDateTime
 import java.util.UUID
 
 
