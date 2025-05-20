@@ -4,6 +4,7 @@ plugins {
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "1.9.25"
+    id("jacoco")
 }
 
 group = "com.trailoapp"
@@ -28,12 +29,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-    testImplementation("org.springframework.security:spring-security-test")
     runtimeOnly("com.h2database:h2")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     runtimeOnly("org.postgresql:postgresql")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // AWS SDK v2 for Cognito
     implementation(platform("software.amazon.awssdk:bom:2.21.0"))
@@ -42,8 +39,22 @@ dependencies {
     // JWT
     implementation("com.auth0:java-jwt:4.4.0")
 
+    // Geospatial
     implementation("org.hibernate:hibernate-spatial:6.6.15.Final")
     implementation("org.locationtech.jts:jts-core:1.19.0")
+
+    // Testing
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+    }
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    jvmArgs = listOf("-XX:+EnableDynamicAgentLoading")
 }
 
 kotlin {
@@ -58,6 +69,18 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
 }
