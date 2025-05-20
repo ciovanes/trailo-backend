@@ -1,7 +1,7 @@
 package com.trailoapp.trailo_backend.controller
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
-import com.trailoapp.trailo_backend.domain.enum.FriendshipStatus
+import com.trailoapp.trailo_backend.domain.enum.social.FriendshipStatus
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.service.FriendshipService
 import org.springframework.http.HttpStatus
