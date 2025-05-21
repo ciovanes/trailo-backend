@@ -1,6 +1,6 @@
 package com.trailoapp.trailo_backend.dto.group.request
 
-import com.trailoapp.trailo_backend.domain.enum.GroupRoles
+import com.trailoapp.trailo_backend.domain.enum.social.GroupRoles
 import jakarta.validation.constraints.NotBlank
 
 data class UpdateRoleRequest(

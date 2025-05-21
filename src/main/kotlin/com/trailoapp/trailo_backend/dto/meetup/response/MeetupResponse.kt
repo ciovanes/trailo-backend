@@ -2,9 +2,9 @@ package com.trailoapp.trailo_backend.dto.meetup.response
 
 import com.trailoapp.trailo_backend.domain.core.GroupEntity
 import com.trailoapp.trailo_backend.domain.core.UserEntity
-import com.trailoapp.trailo_backend.domain.enum.MeetupStatus
-import com.trailoapp.trailo_backend.domain.enum.TerrainType
-import com.trailoapp.trailo_backend.domain.enum.TrailDifficulty
+import com.trailoapp.trailo_backend.domain.enum.geo.MeetupStatus
+import com.trailoapp.trailo_backend.domain.enum.geo.TerrainType
+import com.trailoapp.trailo_backend.domain.enum.geo.TrailDifficulty
 import com.trailoapp.trailo_backend.domain.geo.MeetupEntity
 import com.trailoapp.trailo_backend.dto.meetup.request.PointDto
 import org.locationtech.jts.geom.Point

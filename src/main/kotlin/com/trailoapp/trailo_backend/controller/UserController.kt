@@ -123,7 +123,8 @@ class UserController(
             .body(UserResponse.fromUser(user))
     }
 
-    // ===== MEETUPS =====
+    // ===== USER MEETUPS =====
+
     @GetMapping("/{userId}/meetups")
     fun getUserMeetups(
         @PathVariable userId: UUID,

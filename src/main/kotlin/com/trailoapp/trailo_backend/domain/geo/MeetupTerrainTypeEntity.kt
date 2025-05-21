@@ -1,6 +1,6 @@
 package com.trailoapp.trailo_backend.domain.geo
 
-import com.trailoapp.trailo_backend.domain.enum.TerrainType
+import com.trailoapp.trailo_backend.domain.enum.geo.TerrainType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType

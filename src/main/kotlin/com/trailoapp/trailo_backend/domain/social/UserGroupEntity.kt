@@ -2,8 +2,8 @@ package com.trailoapp.trailo_backend.domain.social
 
 import com.trailoapp.trailo_backend.domain.core.GroupEntity
 import com.trailoapp.trailo_backend.domain.core.UserEntity
-import com.trailoapp.trailo_backend.domain.enum.GroupRoles
-import com.trailoapp.trailo_backend.domain.enum.MembershipStatus
+import com.trailoapp.trailo_backend.domain.enum.social.GroupRoles
+import com.trailoapp.trailo_backend.domain.enum.social.MembershipStatus
 import jakarta.persistence.*
 import org.hibernate.annotations.ColumnTransformer
 import org.hibernate.annotations.CreationTimestamp

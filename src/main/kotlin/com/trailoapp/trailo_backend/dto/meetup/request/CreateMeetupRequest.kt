@@ -1,7 +1,7 @@
 package com.trailoapp.trailo_backend.dto.meetup.request
 
-import com.trailoapp.trailo_backend.domain.enum.TerrainType
-import com.trailoapp.trailo_backend.domain.enum.TrailDifficulty
+import com.trailoapp.trailo_backend.domain.enum.geo.TerrainType
+import com.trailoapp.trailo_backend.domain.enum.geo.TrailDifficulty
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 import java.util.UUID
