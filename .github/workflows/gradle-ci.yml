@@ -1,0 +1,75 @@
+name: Gradle CI
+
+on:
+  push:
+    branches: [ "main", "develop", "ci/setup-github-actions" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: trailo
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+
+      AWS_REGION: eu-central-1
+      COGNITO_USER_POOL_ID: us-east-1-test-pool
+      COGNITO_CLIENT_ID: test-client-id
+      COGNITO_CLIENT_SECRET: test-client-secret
+      AWS_ACCESS_KEY_ID: test-key-id
+      AWS_SECRET_ACCESS_KEY: test-access-key
+
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trailo
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
+
+      - name: Init database
+        run: |
+          PGPASSWORD=${{ env.DB_PASSWORD }} psql -h ${{ env.DB_HOST }} -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }} -f ./sql/init-db.sql
+
+      - name: Build with Gradle Wrapper
+        run: ./gradlew build
+
+      - name: Run tests
+        run: ./gradlew test
+
+  dependency-submission:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582
