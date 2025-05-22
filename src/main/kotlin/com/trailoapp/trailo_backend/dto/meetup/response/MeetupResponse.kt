@@ -7,6 +7,7 @@ import com.trailoapp.trailo_backend.domain.enum.geo.TerrainType
 import com.trailoapp.trailo_backend.domain.enum.geo.TrailDifficulty
 import com.trailoapp.trailo_backend.domain.geo.MeetupEntity
 import com.trailoapp.trailo_backend.dto.meetup.request.PointDto
+import io.swagger.v3.oas.annotations.media.Schema
 import org.locationtech.jts.geom.Point
 import java.math.BigDecimal
 import java.time.Duration
@@ -15,19 +16,37 @@ import java.util.UUID
 
 data class MeetupResponse(
     val uuid: UUID,
+
     val host: UUID,
+
     val group: UUID,
+
     val title: String,
+
     val description: String? = null,
+
     val meetupPicture: String? = null,
+
     val maxParticipants: Short? = Short.MAX_VALUE,
+
+    @Schema(allowableValues = ["BEGINNER", "INTERMEDIATE", "ADVANCED"])
     val difficulty: TrailDifficulty,
+
+    @Schema(allowableValues = ["UNSPECIFIED", "ROCKY", "MUDDY", "SANDY", "FOREST", "MOUNTAIN", "DESERT", "RIVER", "SNOW",
+        "GRAVEL", "CLAY", "VOLCANIC"])
+
     val terrainTypes: List<TerrainType>,
+
     val distanceKm: BigDecimal,
+
     val estimatedDurationInMin: Long,
+
     val meetingTime: OffsetDateTime,
+
     val meetingPoint: PointDto,
+
     val status: MeetupStatus,
+
     val creationDate: OffsetDateTime
 ) {
     companion object {
