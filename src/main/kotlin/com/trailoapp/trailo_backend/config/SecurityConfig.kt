@@ -1,15 +1,10 @@
 package com.trailoapp.trailo_backend.config
 
 import com.trailoapp.trailo_backend.repository.MeetupRepository
-import com.trailoapp.trailo_backend.repository.UserRepository
-import com.trailoapp.trailo_backend.service.UserService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
-import org.springframework.security.authentication.AbstractAuthenticationToken
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -20,9 +15,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtDecoders
 import org.springframework.security.oauth2.jwt.JwtValidators
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -75,6 +67,16 @@ class SecurityConfig (
                 requests.requestMatchers(HttpMethod.POST, "/api/v1/meetups/**").authenticated()
                 requests.requestMatchers(HttpMethod.PATCH, "/api/v1/meetups/**").authenticated()
                 requests.requestMatchers(HttpMethod.DELETE, "/api/v1/meetups/**").authenticated()
+
+                // openAPI
+                requests.requestMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/swagger-resources/**",
+                    "/webjars/**"
+                ).permitAll()
+
             }
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->
