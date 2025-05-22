@@ -1,6 +1,7 @@
 package com.trailoapp.trailo_backend.controller
 
 import com.trailoapp.trailo_backend.domain.core.UserEntity
+import com.trailoapp.trailo_backend.dto.common.response.ErrorResponse
 import com.trailoapp.trailo_backend.dto.common.response.PageResponse
 import com.trailoapp.trailo_backend.dto.meetup.request.CreateMeetupRequest
 import com.trailoapp.trailo_backend.dto.meetup.request.UpdateMeetupRequest
@@ -9,6 +10,14 @@ import com.trailoapp.trailo_backend.dto.meetup.response.UserMeetupResponse
 import com.trailoapp.trailo_backend.dto.user.response.UserResponse
 import com.trailoapp.trailo_backend.service.MeetupService
 import com.trailoapp.trailo_backend.service.UserMeetupService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
@@ -27,6 +36,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/meetups")
+@Tag(name = "Meetups")
 class MeetupController(
     private val meetupService: MeetupService,
     private val userMeetupService: UserMeetupService
@@ -35,6 +45,38 @@ class MeetupController(
     // ===== BASIC MEETUP OPERATIONS =====
 
     @PostMapping("/create")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+        summary = "Create a new meetup",
+        description = "Create a new meetup with the given information."
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "201",
+            description = "Meetup created successfully",
+            content = [Content(schema = Schema(implementation = MeetupResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid input data or validation errors",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "User not member of the group",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Group or user not found",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        )
+    ])
     fun createMeetup(
        @RequestBody request: CreateMeetupRequest,
        @AuthenticationPrincipal user: UserEntity
@@ -47,8 +89,23 @@ class MeetupController(
     }
 
     @GetMapping("/{meetupId}")
+    @Operation(
+        summary = "Get meetup details"
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "200",
+            description = "Meetup details retrieved successfully",
+            content = [Content(schema = Schema(implementation = MeetupResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Meetup not found",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        )
+    ])
     fun getMeetup(
-        @PathVariable meetupId: UUID
+        @Parameter(description = "Meetup UUID") @PathVariable meetupId: UUID
     ): ResponseEntity<MeetupResponse> {
         val meetup = meetupService.findMeetupByUuid(meetupId)
             ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
@@ -59,8 +116,39 @@ class MeetupController(
     }
 
     @PatchMapping("/{meetupId}")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+        summary = "Update meetup details"
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "200",
+            description = "Meetup updated successfully",
+            content = [Content(schema = Schema(implementation = MeetupResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid input data",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "User is not the meetup host",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Meetup not found",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        )
+    ])
     fun updateMeetup(
-        @PathVariable meetupId: UUID,
+        @Parameter(description = "Meetup UUID") @PathVariable meetupId: UUID,
         @RequestBody request: UpdateMeetupRequest,
         @AuthenticationPrincipal user: UserEntity
     ): ResponseEntity<MeetupResponse> {
@@ -72,8 +160,33 @@ class MeetupController(
     }
 
     @DeleteMapping("/{meetupId}")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+        summary = "Delete meetup"
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "204",
+            description = "Meetup deleted successfully"
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "User not authenticated",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "User is not the meetup host",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Meetup not found",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        )
+    ])
     fun deleteMeetup(
-        @PathVariable meetupId: UUID,
+        @Parameter(description = "Meetup UUID") @PathVariable meetupId: UUID,
         @AuthenticationPrincipal user: UserEntity
     ): ResponseEntity<Unit> {
         meetupService.deleteMeetup(meetupId, user.uuid)
@@ -86,11 +199,32 @@ class MeetupController(
     // ===== SEARCH AND LISTING =====
 
     @GetMapping("/search")
+    @Operation(
+        summary = "Search meetups"
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "200",
+            description = "Search results retrieved successfully",
+            content = [Content(schema = Schema(implementation = PageResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid search parameters",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Invalid difficulty or terrain type",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        )
+    ])
     fun searchMeetups(
-        @RequestParam(required = false, defaultValue = "") query: String,
-        @RequestParam(required = false, defaultValue = "0") page: Int,
-        @RequestParam(required = false, defaultValue = "20") size: Int,
-        @RequestParam(required = false, defaultValue = "title") searchBy: String
+        @Parameter(description = "Query") @RequestParam(required = false, defaultValue = "") query: String,
+        @Parameter(description = "Page number") @RequestParam(required = false, defaultValue = "0") page: Int,
+        @Parameter(description = "Page size") @RequestParam(required = false, defaultValue = "20") size: Int,
+        @Parameter(description = "Search by title, difficulty, distance or terrain")
+            @RequestParam(required = false, defaultValue = "title") searchBy: String
     ): ResponseEntity<PageResponse<MeetupResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "meetingTime"))
 
@@ -115,9 +249,20 @@ class MeetupController(
     }
 
     @GetMapping("/discover")
+    @Operation(
+        summary = "Discover meetups",
+        description = "Retrieves upcoming public meetups for discovery."
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "200",
+            description = "Meetups retrieved successfully",
+            content = [Content(schema = Schema(implementation = PageResponse::class))]
+        )
+    ])
     fun getDiscoverMeetups(
-        @RequestParam(required = false, defaultValue = "0") page: Int,
-        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @Parameter(description = "Page number") @RequestParam(required = false, defaultValue = "0") page: Int,
+        @Parameter(description = "Page size") @RequestParam(required = false, defaultValue = "20") size: Int,
     ): ResponseEntity<PageResponse<MeetupResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "meetingTime"))
         val meetups = meetupService.getDiscoverMeetups(pageable)
@@ -135,12 +280,28 @@ class MeetupController(
     }
 
     @GetMapping("/nearby")
+    @Operation(
+        summary = "Find nearby meetups",
+        description = "Finds meetups within given coordinates and radius in km using geospatial search"
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "200",
+            description = "Nearby meetups retrieved successfully",
+            content = [Content(schema = Schema(implementation = PageResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "Invalid coordinates or radius",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        )
+    ])
     fun getNearbyMeetups(
-        @RequestParam latitude: Double,
-        @RequestParam longitude: Double,
-        @RequestParam(defaultValue = "10.0") radiusInKm: Double,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
+        @Parameter(description = "Latitude") @RequestParam latitude: Double,
+        @Parameter(description = "Longitude") @RequestParam longitude: Double,
+        @Parameter(description = "Radius in km") @RequestParam(defaultValue = "10.0") radiusInKm: Double,
+        @Parameter(description = "Page number") @RequestParam(defaultValue = "0") page: Int,
+        @Parameter(description = "Page size") @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<PageResponse<MeetupResponse>> {
         val pageable = PageRequest.of(page, size)
 
@@ -166,8 +327,40 @@ class MeetupController(
     // ===== MEETUP ACTIONS =====
 
     @PostMapping("{meetupId}/join")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+        summary = "Join a meetup",
+        description = "Join a meetup as a participant. For private group meetups, the user needs to be in the group"
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "200",
+            description = "Joined meetup successfully",
+            content = [Content(schema = Schema(implementation = UserMeetupResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "Host cannot join own meetup or already joined",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "User not member of private group",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Meetup not found",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+    ])
     fun joinMeetup(
-        @PathVariable meetupId: UUID,
+        @Parameter(description = "Meetup UUID") @PathVariable meetupId: UUID,
         @AuthenticationPrincipal user: UserEntity
     ): ResponseEntity<UserMeetupResponse> {
         val userMeetup = userMeetupService.joinMeetup(user.uuid, meetupId)
@@ -176,8 +369,29 @@ class MeetupController(
     }
 
     @DeleteMapping("{meetupId}/leave")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+        summary = "Leave a meetup",
+        description = "Leave a meetup where you are a participant"
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "204",
+            description = "Left meetup successfully"
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "User not authenticated",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Meetup not found or user not participant",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        )
+    ])
     fun leaveMeetup(
-        @PathVariable meetupId: UUID,
+        @Parameter(description = "Meetup UUID") @PathVariable meetupId: UUID,
         @AuthenticationPrincipal user: UserEntity
     ): ResponseEntity<Unit> {
         userMeetupService.leaveMeetup(user.uuid, meetupId)
@@ -186,10 +400,38 @@ class MeetupController(
     }
 
     @GetMapping("{meetupId}/participants")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(
+        summary = "Get meetup participants",
+        description = "Get a list of participants for a meetup. If the meetup's group is private, the user needs to be" +
+                "a member of the group to access to the participants list"
+    )
+    @ApiResponses(value = [
+        ApiResponse(
+            responseCode = "200",
+            description = "Participants retrieved successfully",
+            content = [Content(schema = Schema(implementation = PageResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "User not authenticated",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "User cannot view participants of private group meetup",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Meetup not found",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+        )
+    ])
     fun getMeetupParticipants(
-        @PathVariable meetupId: UUID,
-        @RequestParam(required = false, defaultValue = "0") page: Int,
-        @RequestParam(required = false, defaultValue = "20") size: Int,
+        @Parameter(description = "Meetup UUID") @PathVariable meetupId: UUID,
+        @Parameter(description = "Page number") @RequestParam(required = false, defaultValue = "0") page: Int,
+        @Parameter(description = "Page size") @RequestParam(required = false, defaultValue = "20") size: Int,
         @AuthenticationPrincipal user: UserEntity
     ): ResponseEntity<PageResponse<UserResponse>> {
         val pageable = PageRequest.of(page, size)
